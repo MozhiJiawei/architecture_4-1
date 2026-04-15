@@ -13,6 +13,7 @@ Treat `ref/` as the canonical example set for this skill.
    - label granularity
 3. Abstract those observations into reusable style constraints.
 4. Apply the constraints to the target repository without copying irrelevant domain details from the example.
+5. During visual review, load both the exported preview and the matching reference image into vision at the same time and compare them explicitly; do not stop at a text-only reminder.
 
 ## What to borrow
 
@@ -21,6 +22,7 @@ Treat `ref/` as the canonical example set for this skill.
 - level of abstraction
 - placement of infrastructure and middleware
 - how sequence or scenario information is narrated
+- the language discipline of labels and captions when the target output language is Chinese
 
 ## What not to borrow blindly
 
@@ -28,3 +30,4 @@ Treat `ref/` as the canonical example set for this skill.
 - exact component counts
 - exact topology when the target repository differs
 - decorative elements without architectural meaning
+- English label leakage caused by repository identifiers when the requested output language is Chinese

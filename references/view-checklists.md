@@ -9,6 +9,11 @@ Use these checklists while exploring the repository.
 - Which systems look external?
 - Which components own business rules versus orchestration?
 - Which relationships are explicit, and which are inferred?
+- Which candidate elements are true responsibilities versus just folders, frameworks, or helper code?
+- If multiple files implement one responsibility, should they collapse into one logical element?
+- Would a new engineer learn the system shape from this element, or only a code layout detail?
+- Is each important relationship backed by repository evidence, not just intuition?
+- What should be omitted so the view stays architectural instead of turning into a package map?
 
 ## Development View Checklist
 
