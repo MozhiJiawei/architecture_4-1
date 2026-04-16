@@ -123,7 +123,7 @@ Example:
 ```json
 {
   "id": "agent-core",
-  "label": "AIAgent",
+  "label": "Orchestrator",
   "type": "orchestrator",
   "group": "core",
   "color_role": "agent-core",

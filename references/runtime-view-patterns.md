@@ -101,7 +101,7 @@ When the runtime story matters more than topology completeness, prefer a top-lev
   "id": "gateway-turn",
   "label": "Messaging Gateway Turn",
   "summary": "One-sentence runtime story",
-  "entrypoint": "gateway/run.py:start_gateway",
+  "entrypoint": "src/ingress/gateway.py:start",
   "main_step_ids": ["rel-a", "rel-b", "rel-c"],
   "branches": [
     {
