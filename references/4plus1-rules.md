@@ -23,7 +23,7 @@ Show how the codebase is organized for developers:
 
 Prefer compile-time and packaging relationships over runtime chatter.
 
-## Process View
+## Runtime View
 
 Show runtime collaboration:
 - request paths
@@ -34,6 +34,12 @@ Show runtime collaboration:
 - cross-service collaboration
 
 This view should explain concurrency, communication, and operational behavior.
+
+Keep the runtime view architecturally parallel to the logic view:
+- build it from evidence-backed runtime participants and interactions
+- preserve explicit versus inferred interaction edges
+- prefer readable sequence or collaboration structure over a generic network sketch
+- include branches only when they materially explain auth, failure, retries, or state transitions
 
 ## Physical View
 

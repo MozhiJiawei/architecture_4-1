@@ -11,11 +11,11 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 REF_MAP = {
-    "logic-view": "逻辑视图.jpg",
-    "development-view": "开发视图.jpg",
-    "process-view": "运行视图.jpg",
-    "physical-view": "物理视图.jpg",
-    "scenario-view": "场景视图.jpg",
+    "logic-view": "\u903b\u8f91\u89c6\u56fe.jpg",
+    "development-view": "\u5f00\u53d1\u89c6\u56fe.jpg",
+    "runtime-view": "\u8fd0\u884c\u89c6\u56fe.jpg",
+    "physical-view": "\u7269\u7406\u89c6\u56fe.jpg",
+    "scenario-view": "\u573a\u666f\u89c6\u56fe.jpg",
 }
 
 
@@ -39,9 +39,9 @@ def inspect_image(image_path: Path) -> tuple[list[str], list[str]]:
         non_white = sum(1 for pixel in pixels if pixel != (255, 255, 255))
         ratio = non_white / max(1, len(pixels))
         if ratio < 0.01:
-            errors.append(f"{image_path}: 图像几乎空白（非白像素占比 {ratio:.4f}）")
+            errors.append(f"{image_path}: image is nearly blank (non-white pixel ratio {ratio:.4f})")
         elif ratio < 0.05:
-            warnings.append(f"{image_path}: 图像内容过稀（非白像素占比 {ratio:.4f}）")
+            warnings.append(f"{image_path}: image content is sparse (non-white pixel ratio {ratio:.4f})")
     return warnings, errors
 
 
@@ -68,25 +68,25 @@ def review_prompt_for(image_path: Path, repo_root: Path) -> str:
     width, height, ratio = inspect_metrics(image_path)
     ref_path, ref_metrics = ref_metrics_for(image_path, repo_root)
     lines = [
-        "AI 视觉复核任务：",
-        f"1. 必须加载导出的预览图：{image_path}",
+        "AI visual review task:",
+        f"1. You must load the exported preview image: {image_path}",
     ]
     if ref_path and ref_metrics:
         ref_width, ref_height, ref_ratio = ref_metrics
-        lines.append(f"2. 必须加载参考图：{ref_path}")
+        lines.append(f"2. You must load the matching reference image: {ref_path}")
         lines.append(
-            f"3. 当前预览指标：尺寸 {width}x{height}，非白像素占比 {ratio:.4f}。参考图指标：尺寸 {ref_width}x{ref_height}，非白像素占比 {ref_ratio:.4f}。"
+            f"3. Current preview metrics: size {width}x{height}, non-white pixel ratio {ratio:.4f}. Reference metrics: size {ref_width}x{ref_height}, non-white pixel ratio {ref_ratio:.4f}."
         )
     else:
-        lines.append("2. 未找到同名参考图，请改为对照 references/style-profiles.md 与 references/ref-usage.md。")
-        lines.append(f"3. 当前预览指标：尺寸 {width}x{height}，非白像素占比 {ratio:.4f}。")
+        lines.append("2. No matching reference image was found; compare against references/style-profiles.md and references/ref-usage.md instead.")
+        lines.append(f"3. Current preview metrics: size {width}x{height}, non-white pixel ratio {ratio:.4f}.")
     lines.extend(
         [
-            "4. 先明确说明你已经同时看过导出图和参考图，再开始判断。",
-            "5. 必须逐项对比：结构分层、分组表达、画面密度、标签语言与可读性、连线走向、颜色纪律、整体视觉秩序。",
-            "6. 明确指出具体问题，例如大面积空白、布局失衡、分组语义弱、标签过长、颜色不一致、缺失关系、英文泄漏或中文不可读。",
-            "7. 优先给出应修改的中间模型字段或渲染器布局规则；如果建议删边，只能给出最小化删边建议，不得把所有跨组连线全部去掉。",
-            "8. 修改后重新导出并再次复核，不要停在一次性评论。",
+            "4. State explicitly that you reviewed both the export and the reference before judging quality.",
+            "5. Compare structure layering, grouping semantics, visual density, label language and readability, edge routing, color discipline, and overall visual order.",
+            "6. Call out concrete issues such as large blank areas, unbalanced layout, weak grouping semantics, oversized labels, inconsistent colors, missing relationships, or unreadable labels.",
+            "7. Prefer suggesting changes to intermediate-model fields or renderer layout rules; if suggesting edge removal, keep it minimal rather than deleting all cross-group edges.",
+            "8. After changes, export again and review again; do not stop at one round of commentary.",
         ]
     )
     return "\n".join(lines)
@@ -94,20 +94,20 @@ def review_prompt_for(image_path: Path, repo_root: Path) -> str:
 
 def write_visual_review_report(target: Path, repo_root: Path, images: list[Path]) -> Path:
     report_path = target / "visual-review.md"
-    lines = ["# 视觉复核清单", ""]
+    lines = ["# Visual Review Checklist", ""]
     for image_path in images:
         stem = image_path.stem
         width, height, ratio = inspect_metrics(image_path)
         ref_path, ref_metrics = ref_metrics_for(image_path, repo_root)
         lines.append(f"## {stem}")
         lines.append("")
-        lines.append(f"- 导出图：`{image_path}`")
-        lines.append(f"- 参考图：`{ref_path}`" if ref_path and ref_path.exists() else "- 参考图：未找到")
-        lines.append(f"- 指标：`{width}x{height}`，非白像素占比 `{ratio:.4f}`")
+        lines.append(f"- Export: `{image_path}`")
+        lines.append(f"- Reference: `{ref_path}`" if ref_path and ref_path.exists() else "- Reference: not found")
+        lines.append(f"- Metrics: `{width}x{height}`, non-white pixel ratio `{ratio:.4f}`")
         if ref_metrics:
             ref_width, ref_height, ref_ratio = ref_metrics
-            lines.append(f"- 参考指标：`{ref_width}x{ref_height}`，非白像素占比 `{ref_ratio:.4f}`")
-            lines.append(f"- 密度差值：`{abs(ratio - ref_ratio):.4f}`")
+            lines.append(f"- Reference metrics: `{ref_width}x{ref_height}`, non-white pixel ratio `{ref_ratio:.4f}`")
+            lines.append(f"- Density delta: `{abs(ratio - ref_ratio):.4f}`")
         lines.append("")
         lines.append("```text")
         lines.append(review_prompt_for(image_path, repo_root))
@@ -155,11 +155,11 @@ def main() -> int:
 
     report_path = write_visual_review_report(target, repo_root, images)
 
-    print("\n建议使用的 AI 视觉复核提示词：\n")
+    print("\nSuggested AI visual review prompt:\n")
     for image_path in images:
         print(review_prompt_for(image_path, repo_root))
         print()
-    print(f"视觉复核报告已写入：{report_path}")
+    print(f"Visual review report written to: {report_path}")
 
     if all_errors:
         print(f"Inspection failed with {len(all_errors)} error(s) and {len(all_warnings)} warning(s).")

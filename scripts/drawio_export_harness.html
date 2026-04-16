@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <base href="__BASE_HREF__" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" type="text/css" href="styles/grapheditor.css" />
+  <style>
+    body {
+      overflow: hidden;
+      padding: 0;
+      margin: 0;
+      background: transparent;
+    }
+
+    .geEditor * {
+      color: #111827;
+    }
+  </style>
+  <script type="text/javascript">
+    var editorUi;
+    var appearance = 0;
+    var theme = "kennedy";
+
+    const __drawioStorage = {};
+
+    Object.defineProperty(window, "mxIsElectron", { value: false });
+    Object.defineProperty(document, "cookie", { value: "" });
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        getItem: function (key) {
+          return Object.prototype.hasOwnProperty.call(__drawioStorage, key)
+            ? __drawioStorage[key]
+            : null;
+        },
+        setItem: function (key, value) {
+          __drawioStorage[key] = value;
+        },
+        removeItem: function (key) {
+          delete __drawioStorage[key];
+        },
+      },
+    });
+
+    const fakedWindowOpener = {
+      postMessage: function (msg) {
+        if (window.drawioHostPostMessage) {
+          window.drawioHostPostMessage(msg);
+        }
+      },
+    };
+    Object.defineProperty(window, "opener", { value: fakedWindowOpener });
+
+    var isLocalStorage = true;
+    var urlParams = {
+      embed: "1",
+      configure: "1",
+      proto: "json",
+      ui: theme,
+      dark: "0",
+      "high-contrast": "0",
+      lang: "en",
+      noSaveBtn: "1",
+      noExitBtn: "1",
+      chrome: "0",
+      "svg-warning": "0",
+    };
+
+    function mxscript(src, onLoad, id, dataAppKey, noWrite) {
+      if (onLoad != null || noWrite) {
+        var s = document.createElement("script");
+        s.setAttribute("type", "text/javascript");
+        s.setAttribute("src", src);
+        var resolved = false;
+
+        if (id != null) {
+          s.setAttribute("id", id);
+        }
+
+        if (dataAppKey != null) {
+          s.setAttribute("data-app-key", dataAppKey);
+        }
+
+        if (onLoad != null) {
+          s.onload = s.onreadystatechange = function () {
+            if (!resolved && (!this.readyState || this.readyState === "complete")) {
+              resolved = true;
+              onLoad();
+            }
+          };
+        }
+
+        var t = document.getElementsByTagName("script")[0];
+        if (t != null) {
+          t.parentNode.insertBefore(s, t);
+        }
+      } else {
+        document.write(
+          '<script src="' +
+            src +
+            '"' +
+            (id != null ? ' id="' + id + '" ' : "") +
+            (dataAppKey != null ? ' data-app-key="' + dataAppKey + '" ' : "") +
+            "></scr" +
+            "ipt>"
+        );
+      }
+    }
+
+    function mxinclude(src) {
+      var g = document.createElement("script");
+      g.type = "text/javascript";
+      g.async = true;
+      g.src = src;
+
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(g, s);
+    }
+
+    window.__dispatchHostMessage = function (rawMessage) {
+      let evtData = rawMessage;
+      let dataObj;
+
+      if (evtData) {
+        try {
+          dataObj = JSON.parse(evtData);
+        } catch (e) {
+          dataObj = undefined;
+        }
+      }
+
+      if (dataObj && dataObj.action === "export" && editorUi && editorUi.fileNode) {
+        var scale = Number.parseFloat(editorUi.fileNode.getAttribute("scale"));
+        if (!Number.isNaN(scale)) {
+          dataObj.scale = scale;
+        }
+
+        var border = Number.parseFloat(editorUi.fileNode.getAttribute("border"));
+        if (!Number.isNaN(border)) {
+          dataObj.border = border;
+        }
+
+        evtData = JSON.stringify(dataObj);
+      }
+
+      const fakedEvt = new Event("message");
+      fakedEvt.source = fakedWindowOpener;
+      fakedEvt.data = evtData;
+
+      const origFocus = window.focus;
+      window.focus = function () {};
+      try {
+        window.dispatchEvent(fakedEvt);
+      } finally {
+        window.focus = origFocus;
+      }
+    };
+  </script>
+  <script src="js/PreConfig.js"></script>
+  <script src="js/app.min.js"></script>
+  <script src="js/stencils.min.js"></script>
+  <script src="js/shapes-14-6-5.min.js"></script>
+  <script src="js/PostConfig.js"></script>
+</head>
+<body class="geEditor">
+  <div id="geInfo">
+    <div class="geBlock" style="text-align: center; min-width: 50%">
+      <h2 id="geStatus">Loading...</h2>
+    </div>
+  </div>
+  <script type="text/javascript">
+    (function () {
+      function patchFn(clazz, fnName, fnFactory) {
+        var old = clazz[fnName];
+        clazz[fnName] = fnFactory(old);
+      }
+
+      patchFn(EditorUi.prototype, "init", function (old) {
+        return function () {
+          editorUi = this;
+          return old.apply(this, arguments);
+        };
+      });
+
+      patchFn(EditorUi.prototype, "createFileData", function (old) {
+        return function (
+          node,
+          graph,
+          file,
+          url,
+          forceXml,
+          forceSvg,
+          forceHtml,
+          embeddedCallback,
+          ignoreSelection,
+          compact,
+          uncompressed
+        ) {
+          return old.apply(this, [
+            node,
+            graph,
+            file,
+            url,
+            forceXml,
+            forceSvg,
+            forceHtml,
+            embeddedCallback,
+            ignoreSelection,
+            true,
+            uncompressed,
+          ]);
+        };
+      });
+
+      patchFn(mxUtils, "getXml", function (old) {
+        return function (node) {
+          return new XMLSerializer().serializeToString(node);
+        };
+      });
+
+      patchFn(Graph.prototype, "getSvg", function (old) {
+        return function (
+          background,
+          scale,
+          border,
+          nocrop,
+          crisp,
+          ignoreSelection,
+          showText,
+          imgExport,
+          linkTarget,
+          hasShadow,
+          incExtFonts,
+          keepTheme,
+          exportType
+        ) {
+          const fileNode = editorUi && editorUi.fileNode;
+          const baseLinkTarget = fileNode ? fileNode.getAttribute("linkTarget") : null;
+          linkTarget = linkTarget || baseLinkTarget;
+
+          return old.apply(this, [
+            background,
+            scale,
+            border,
+            nocrop,
+            crisp,
+            ignoreSelection,
+            showText,
+            imgExport,
+            linkTarget,
+            hasShadow,
+            incExtFonts,
+            keepTheme,
+            exportType,
+          ]);
+        };
+      });
+
+      App.main();
+    })();
+  </script>
+</body>
+</html>

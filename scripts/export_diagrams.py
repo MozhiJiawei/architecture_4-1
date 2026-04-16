@@ -1,36 +1,26 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
+import base64
+import json
+import posixpath
+import tempfile
+import threading
+from contextlib import contextmanager
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from xml.etree import ElementTree as ET
+from urllib.parse import unquote, urlsplit
 
-from PIL import Image, ImageDraw, ImageFont
-
-
-BACKGROUND = "#ffffff"
-DEFAULT_GROUP_FILL = "#f8f9fa"
-DEFAULT_GROUP_STROKE = "#6c757d"
-DEFAULT_NODE_FILL = "#ffffff"
-DEFAULT_NODE_STROKE = "#1f2937"
-DEFAULT_EDGE_STROKE = "#374151"
-DEFAULT_TEXT_COLOR = "#111827"
-FONT_CANDIDATES = [
-    Path("C:/Windows/Fonts/msyh.ttc"),
-    Path("C:/Windows/Fonts/msyhbd.ttc"),
-    Path("C:/Windows/Fonts/simhei.ttf"),
-    Path("C:/Windows/Fonts/simsun.ttc"),
-]
+from PIL import Image
+from playwright.async_api import ConsoleMessage, async_playwright
 
 
-def parse_style(style: str) -> dict[str, str]:
-    result: dict[str, str] = {}
-    for part in style.split(";"):
-        if "=" not in part:
-            continue
-        key, value = part.split("=", 1)
-        result[key] = value
-    return result
+DRAWIO_EXTENSION_ROOT = Path.home() / ".vscode" / "extensions" / "hediet.vscode-drawio-1.9.0"
+DRAWIO_WEBAPP_ROOT = DRAWIO_EXTENSION_ROOT / "drawio" / "src" / "main" / "webapp"
+HARNESS_TEMPLATE = Path(__file__).with_name("drawio_export_harness.html")
+BACKGROUND = (255, 255, 255, 255)
 
 
 def iter_targets(target: Path) -> list[Path]:
@@ -41,269 +31,206 @@ def iter_targets(target: Path) -> list[Path]:
     raise FileNotFoundError(f"Target not found: {target}")
 
 
-def get_canvas_size(root: ET.Element) -> tuple[int, int]:
-    model = root.find("./diagram/mxGraphModel")
-    if model is None:
-        return 1600, 1200
-    width = int(float(model.attrib.get("pageWidth", "1600")))
-    height = int(float(model.attrib.get("pageHeight", "1200")))
-    return width, height
-
-
-def load_font(size: int, *, bold: bool = False) -> ImageFont.ImageFont:
-    candidates = FONT_CANDIDATES[1:] + FONT_CANDIDATES[:1] if bold else FONT_CANDIDATES
-    for font_path in candidates:
-        if font_path.exists():
-            try:
-                return ImageFont.truetype(str(font_path), size=size)
-            except OSError:
-                continue
-    return ImageFont.load_default()
-
-
-def split_tokens(raw_line: str) -> list[str]:
-    if " " in raw_line:
-        return raw_line.split()
-    return list(raw_line)
-
-
-def wrap_text(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.ImageFont, max_width: int) -> list[str]:
-    if not text:
-        return []
-    lines: list[str] = []
-    for raw_line in text.replace("&#10;", "\n").splitlines():
-        tokens = split_tokens(raw_line)
-        if not tokens:
-            lines.append("")
-            continue
-        current = tokens[0]
-        for token in tokens[1:]:
-            separator = " " if len(token) > 1 and " " in raw_line else ""
-            candidate = f"{current}{separator}{token}"
-            bbox = draw.textbbox((0, 0), candidate, font=font)
-            if bbox[2] - bbox[0] <= max_width:
-                current = candidate
-            else:
-                lines.append(current)
-                current = token
-        lines.append(current)
-    return lines
-
-
-def draw_multiline_text(
-    draw: ImageDraw.ImageDraw,
-    box: tuple[int, int, int, int],
-    text: str,
-    font: ImageFont.ImageFont,
-    *,
-    line_height: int,
-    fill: str,
-) -> None:
-    x, y, width, height = box
-    lines = wrap_text(draw, text, font, max_width=max(40, width - 16))
-    text_y = y + 8
-    for line in lines:
-        if text_y + line_height > y + height - 4:
-            break
-        draw.text((x + 8, text_y), line, fill=fill, font=font)
-        text_y += line_height
-
-
-def choose_anchor_points(
-    source_box: tuple[int, int, int, int],
-    target_box: tuple[int, int, int, int],
-) -> tuple[tuple[int, int], tuple[int, int]]:
-    sx, sy, sw, sh = source_box
-    tx, ty, tw, th = target_box
-    source_center = (sx + sw // 2, sy + sh // 2)
-    target_center = (tx + tw // 2, ty + th // 2)
-    dx = target_center[0] - source_center[0]
-    dy = target_center[1] - source_center[1]
-
-    if abs(dx) >= abs(dy):
-        if dx >= 0:
-            return (sx + sw, sy + sh // 2), (tx, ty + th // 2)
-        return (sx, sy + sh // 2), (tx + tw, ty + th // 2)
-    if dy >= 0:
-        return (sx + sw // 2, sy + sh), (tx + tw // 2, ty)
-    return (sx + sw // 2, sy), (tx + tw // 2, ty + th)
-
-
-def point_from_relative(box: tuple[int, int, int, int], rx: float, ry: float) -> tuple[int, int]:
-    x, y, w, h = box
-    return int(x + (w * rx)), int(y + (h * ry))
-
-
-def choose_anchor_points_from_style(
-    source_box: tuple[int, int, int, int],
-    target_box: tuple[int, int, int, int],
-    style: dict[str, str],
-) -> tuple[tuple[int, int], tuple[int, int]]:
-    if {"exitX", "exitY", "entryX", "entryY"} <= style.keys():
-        start = point_from_relative(
-            source_box,
-            float(style["exitX"]),
-            float(style["exitY"]),
+def ensure_drawio_runtime() -> None:
+    if not DRAWIO_WEBAPP_ROOT.exists():
+        raise FileNotFoundError(
+            "Bundled draw.io webapp not found at "
+            f"{DRAWIO_WEBAPP_ROOT}. Install the VS Code draw.io extension first."
         )
-        end = point_from_relative(
-            target_box,
-            float(style["entryX"]),
-            float(style["entryY"]),
-        )
-        return start, end
-    return choose_anchor_points(source_box, target_box)
+    if not HARNESS_TEMPLATE.exists():
+        raise FileNotFoundError(f"Harness template not found: {HARNESS_TEMPLATE}")
 
 
-def orthogonal_path(
-    start: tuple[int, int],
-    end: tuple[int, int],
-) -> list[tuple[int, int]]:
-    sx, sy = start
-    tx, ty = end
-    if abs(sx - tx) >= abs(sy - ty):
-        mid_x = (sx + tx) // 2
-        return [start, (mid_x, sy), (mid_x, ty), end]
-    mid_y = (sy + ty) // 2
-    return [start, (sx, mid_y), (tx, mid_y), end]
+def build_harness_html(base_href: str) -> str:
+    template = HARNESS_TEMPLATE.read_text(encoding="utf-8")
+    return template.replace("__BASE_HREF__", base_href)
 
 
-def parse_waypoints(cell: ET.Element) -> list[tuple[int, int]]:
-    points_parent = cell.find("./mxGeometry/Array[@as='points']")
-    if points_parent is None:
-        return []
-    points: list[tuple[int, int]] = []
-    for point in points_parent.findall("./mxPoint"):
+def default_drawio_config() -> dict[str, Any]:
+    return {
+        "compressXml": True,
+        "simpleLabels": False,
+    }
+
+
+class DrawioHarness:
+    def __init__(self, page) -> None:
+        self.page = page
+        self.events: list[dict[str, Any]] = []
+        self.pending_waiters: list[tuple[str, asyncio.Future[dict[str, Any]]]] = []
+
+    async def on_console(self, message: ConsoleMessage) -> None:
+        if message.type == "error":
+            print(f"[drawio console error] {message.text}")
+
+    async def on_drawio_message(self, payload: Any) -> None:
+        if isinstance(payload, str):
+            text = payload
+        else:
+            text = json.dumps(payload)
         try:
-            x = int(float(point.attrib["x"]))
-            y = int(float(point.attrib["y"]))
-        except (KeyError, ValueError):
-            continue
-        points.append((x, y))
-    return points
+            message = json.loads(text)
+        except json.JSONDecodeError:
+            return
+        if not isinstance(message, dict):
+            return
+        self.events.append(message)
+        for expected_event, future in list(self.pending_waiters):
+            if future.done():
+                self.pending_waiters.remove((expected_event, future))
+                continue
+            if message.get("event") == expected_event:
+                future.set_result(message)
+                self.pending_waiters.remove((expected_event, future))
+                break
+
+    async def wait_for_event(self, event_name: str, timeout_ms: int = 30000) -> dict[str, Any]:
+        for index, existing in enumerate(self.events):
+            if existing.get("event") == event_name:
+                return self.events.pop(index)
+        future: asyncio.Future[dict[str, Any]] = asyncio.get_running_loop().create_future()
+        waiter = (event_name, future)
+        self.pending_waiters.append(waiter)
+        try:
+            return await asyncio.wait_for(future, timeout=timeout_ms / 1000)
+        finally:
+            if waiter in self.pending_waiters:
+                self.pending_waiters.remove(waiter)
+
+    async def send_action(self, action: dict[str, Any]) -> None:
+        serialized = json.dumps(action, ensure_ascii=False)
+        await self.page.evaluate("(payload) => window.__dispatchHostMessage(payload)", serialized)
 
 
-def draw_polyline(
-    draw: ImageDraw.ImageDraw,
-    points: list[tuple[int, int]],
+class DrawioRequestHandler(SimpleHTTPRequestHandler):
+    webapp_root: Path
+    harness_path: Path
+
+    def translate_path(self, path: str) -> str:
+        parsed = urlsplit(path)
+        clean_path = posixpath.normpath(unquote(parsed.path))
+        if clean_path in {"/", "/harness.html"}:
+            return str(self.harness_path)
+        return str(self.webapp_root / clean_path.lstrip("/"))
+
+    def log_message(self, format: str, *args: Any) -> None:
+        return
+
+
+@contextmanager
+def start_drawio_server():
+    with tempfile.TemporaryDirectory(prefix="drawio-export-") as temp_dir:
+        temp_root = Path(temp_dir)
+        server = ThreadingHTTPServer(("127.0.0.1", 0), DrawioRequestHandler)
+        host, port = server.server_address
+
+        harness_path = temp_root / "harness.html"
+        harness_path.write_text(
+            build_harness_html(f"http://{host}:{port}/index.html"),
+            encoding="utf-8",
+        )
+
+        handler = type(
+            "BoundDrawioRequestHandler",
+            (DrawioRequestHandler,),
+            {
+                "webapp_root": DRAWIO_WEBAPP_ROOT,
+                "harness_path": harness_path,
+            },
+        )
+        server.RequestHandlerClass = handler
+
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            yield f"http://{host}:{port}/harness.html"
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+
+
+def flatten_png_background(path: Path) -> None:
+    with Image.open(path) as img:
+        rgba = img.convert("RGBA")
+        flattened = Image.alpha_composite(Image.new("RGBA", rgba.size, BACKGROUND), rgba).convert("RGB")
+        flattened.save(path)
+
+
+async def export_with_real_drawio(
+    drawio_path: Path,
+    output_path: Path,
     *,
-    fill: str,
-    width: int,
-    dashed: bool,
+    flatten_png: bool = True,
 ) -> None:
-    for start, end in zip(points, points[1:]):
-        if dashed:
-            draw.line([start, end], fill=fill, width=width)
-        else:
-            draw.line([start, end], fill=fill, width=width)
+    ensure_drawio_runtime()
 
+    with start_drawio_server() as harness_url:
+        async with async_playwright() as playwright:
+            browser = await playwright.chromium.launch(headless=True)
+            try:
+                page = await browser.new_page(viewport={"width": 1600, "height": 1200})
+                harness = DrawioHarness(page)
 
-def label_position(points: list[tuple[int, int]]) -> tuple[int, int]:
-    middle_index = len(points) // 2
-    ax, ay = points[middle_index - 1]
-    bx, by = points[middle_index]
-    x = (ax + bx) // 2
-    y = (ay + by) // 2
-    return x + 8, y - 18
+                await page.expose_function("drawioHostPostMessage", harness.on_drawio_message)
+                page.on("console", harness.on_console)
+                await page.goto(harness_url, wait_until="load")
 
+                await harness.wait_for_event("configure")
+                await harness.send_action({
+                    "action": "configure",
+                    "config": default_drawio_config(),
+                })
 
-def export_drawio_to_png(drawio_path: Path, output_path: Path) -> None:
-    root = ET.parse(drawio_path).getroot()
-    width, height = get_canvas_size(root)
-    image = Image.new("RGB", (width, height), BACKGROUND)
-    draw = ImageDraw.Draw(image)
-    group_font = load_font(18, bold=True)
-    node_font = load_font(17)
-    edge_font = load_font(15)
+                await harness.wait_for_event("init")
 
-    cells = root.findall(".//mxCell")
-    geometries: dict[str, tuple[int, int, int, int]] = {}
-    edges: list[ET.Element] = []
+                xml = drawio_path.read_text(encoding="utf-8")
+                await harness.send_action({
+                    "action": "load",
+                    "xml": xml,
+                    "autosave": 1,
+                })
 
-    for cell in cells:
-        geometry = cell.find("./mxGeometry")
-        if geometry is None:
-            continue
-        cell_id = cell.attrib.get("id", "")
-        if cell.attrib.get("edge") == "1":
-            edges.append(cell)
-            continue
-        if cell.attrib.get("vertex") != "1":
-            continue
-        x = int(float(geometry.attrib.get("x", "0")))
-        y = int(float(geometry.attrib.get("y", "0")))
-        w = int(float(geometry.attrib.get("width", "0")))
-        h = int(float(geometry.attrib.get("height", "0")))
-        parent = cell.attrib.get("parent", "")
-        if parent in geometries:
-            px, py, _, _ = geometries[parent]
-            x += px
-            y += py
-        geometries[cell_id] = (x, y, w, h)
+                await harness.send_action({
+                    "action": "export",
+                    "format": "xml",
+                    "actionId": "export-xml",
+                })
+                await harness.wait_for_event("export")
 
-        style = parse_style(cell.attrib.get("style", ""))
-        value = cell.attrib.get("value", "")
-        if "swimlane" in cell.attrib.get("style", ""):
-            group_fill = style.get("fillColor", DEFAULT_GROUP_FILL)
-            group_stroke = style.get("strokeColor", DEFAULT_GROUP_STROKE)
-            draw.rounded_rectangle((x, y, x + w, y + h), radius=4, outline=group_stroke, fill=group_fill, width=2)
-            start_size = int(style.get("startSize", "36"))
-            draw.rectangle((x, y, x + w, y + start_size), outline=group_stroke, fill=group_fill, width=2)
-            draw_multiline_text(
-                draw,
-                (x + 4, y + 4, w - 8, start_size - 8),
-                value,
-                group_font,
-                line_height=22,
-                fill=style.get("fontColor", DEFAULT_TEXT_COLOR),
-            )
-        else:
-            node_fill = style.get("fillColor", DEFAULT_NODE_FILL)
-            node_stroke = style.get("strokeColor", DEFAULT_NODE_STROKE)
-            draw.rounded_rectangle((x, y, x + w, y + h), radius=8, outline=node_stroke, fill=node_fill, width=2)
-            draw_multiline_text(
-                draw,
-                (x + 4, y + 4, w - 8, h - 8),
-                value,
-                node_font,
-                line_height=20,
-                fill=style.get("fontColor", DEFAULT_TEXT_COLOR),
-            )
+                format_name = "xmlpng" if output_path.suffix.lower() == ".png" else "xmlsvg"
+                await harness.send_action({
+                    "action": "export",
+                    "format": format_name,
+                    "actionId": f"export-{format_name}",
+                })
+                export_event = await harness.wait_for_event("export", timeout_ms=60000)
 
-    for cell in edges:
-        source = cell.attrib.get("source", "")
-        target = cell.attrib.get("target", "")
-        if source not in geometries or target not in geometries:
-            continue
-        style = parse_style(cell.attrib.get("style", ""))
-        start, end = choose_anchor_points_from_style(geometries[source], geometries[target], style)
-        dashed = style.get("dashed") == "1"
-        edge_stroke = style.get("strokeColor", DEFAULT_EDGE_STROKE)
-        edge_font_color = style.get("fontColor", edge_stroke)
-        waypoints = parse_waypoints(cell)
-        points = [start, *waypoints, end] if waypoints else orthogonal_path(start, end)
-        if dashed:
-            draw_polyline(draw, points, fill=edge_stroke, width=2, dashed=True)
-        else:
-            draw_polyline(draw, points, fill=edge_stroke, width=3, dashed=False)
-        label = cell.attrib.get("value", "")
-        if label:
-            label_x, label_y = label_position(points)
-            bbox = draw.textbbox((label_x, label_y), label, font=edge_font)
-            draw.rounded_rectangle(
-                (bbox[0] - 4, bbox[1] - 2, bbox[2] + 4, bbox[3] + 2),
-                radius=4,
-                fill=BACKGROUND,
-                outline=None,
-            )
-            draw.text((label_x, label_y), label, fill=edge_font_color, font=edge_font)
+                data = str(export_event.get("data") or "")
+                prefix = (
+                    "data:image/png;base64,"
+                    if output_path.suffix.lower() == ".png"
+                    else "data:image/svg+xml;base64,"
+                )
+                if not data.startswith(prefix):
+                    raise ValueError(
+                        f"Unexpected export payload for {drawio_path}: missing prefix {prefix!r}"
+                    )
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    image.save(output_path)
+                decoded = base64.b64decode(data[len(prefix):])
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                output_path.write_bytes(decoded)
+                await page.close()
+            finally:
+                await browser.close()
+
+    if flatten_png and output_path.suffix.lower() == ".png":
+        flatten_png_background(output_path)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Export generated draw.io diagrams to preview formats."
+        description="Export generated draw.io diagrams using the real draw.io renderer."
     )
     parser.add_argument(
         "target",
@@ -314,17 +241,23 @@ def main() -> int:
     parser.add_argument(
         "--format",
         default="png",
-        choices=["png"],
+        choices=["png", "svg"],
         help="Export format",
     )
     parser.add_argument(
         "--output-dir",
         help="Directory for exported previews (defaults to <target>/exports)",
     )
+    parser.add_argument(
+        "--preserve-alpha",
+        action="store_true",
+        help="Keep PNG alpha instead of flattening onto white.",
+    )
     args = parser.parse_args()
 
     target = Path(args.target)
     try:
+        ensure_drawio_runtime()
         files = iter_targets(target)
     except Exception as exc:
         print(f"export_diagrams.py failed: {exc}")
@@ -334,13 +267,25 @@ def main() -> int:
         print(f"export_diagrams.py failed: no .drawio files found in {target}")
         return 1
 
-    output_dir = Path(args.output_dir) if args.output_dir else (target.parent / "exports" if target.is_file() else target / "exports")
+    output_dir = Path(args.output_dir) if args.output_dir else (
+        target.parent / "exports" if target.is_file() else target / "exports"
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    for drawio_path in files:
-        output_path = output_dir / f"{drawio_path.stem}.png"
-        export_drawio_to_png(drawio_path, output_path)
-        print(f"Exported {drawio_path} -> {output_path}")
+    try:
+        for drawio_path in files:
+            output_path = output_dir / f"{drawio_path.stem}.{args.format}"
+            asyncio.run(
+                export_with_real_drawio(
+                    drawio_path,
+                    output_path,
+                    flatten_png=not args.preserve_alpha,
+                )
+            )
+            print(f"Exported {drawio_path} -> {output_path}")
+    except Exception as exc:
+        print(f"export_diagrams.py failed: {exc}")
+        return 1
     return 0
 
 
