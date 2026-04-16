@@ -1,13 +1,13 @@
 ---
-name: generate-4plus1-diagrams
-description: Analyze a source repository and generate editable draw.io files for the 4+1 architectural view model. Use when Codex needs to inspect project structure, infer module boundaries and component relationships, produce logic/development/runtime/physical/scenario views, align output to the reference diagrams in ref/, and validate diagram XML, style constraints, and exported previews.
+name: generate-3plus1-diagrams
+description: Analyze a source repository and generate editable draw.io files for the architectural view model used by this skill. Use when Codex needs to inspect project structure, infer module boundaries and component relationships, produce logic/development/runtime/use-case views, align output to the reference diagrams in ref/, and validate diagram XML, style constraints, and exported previews.
 ---
 
-# Generate 4+1 Diagrams
+# Generate 3+1 Diagrams
 
 ## Goal
 
-Turn a source repository into one or more editable `.drawio` architecture diagrams that match the 4+1 view model and stay visually aligned with the reference diagrams in `ref/`.
+Turn a source repository into one or more editable `.drawio` architecture diagrams that match the 3+1 view model and stay visually aligned with the reference diagrams in `ref/`.
 
 When the user requests only some views, produce only those views.
 
@@ -23,8 +23,7 @@ Start one dedicated subagent for each requested view:
 - logic
 - development
 - runtime
-- physical
-- scenario
+- use-case
 
 Use `gpt-5.4` for every view-owning subagent.
 
@@ -32,8 +31,7 @@ Each subagent should work in an isolated area under:
 - `tmp-artifacts/<repo-name>/logic/`
 - `tmp-artifacts/<repo-name>/development/`
 - `tmp-artifacts/<repo-name>/runtime/`
-- `tmp-artifacts/<repo-name>/physical/`
-- `tmp-artifacts/<repo-name>/scenario/`
+- `tmp-artifacts/<repo-name>/use-case/`
 
 The main agent owns review and completion:
 - load the relevant images in `ref/` before dispatching subagents
@@ -81,7 +79,7 @@ Every subagent prompt must include the minimum skill context it needs to behave
 like an extension of this skill rather than a generic researcher.
 
 At dispatch time, the main agent must explicitly pass:
-- which 4+1 view the subagent owns
+- which 3+1 view the subagent owns
 - the required output directory under `tmp-artifacts/<repo-name>/<view>/`
 - the required deliverables: intermediate JSON and evidence/assumptions note
 - the exact expected filenames, for example `<view>-view.json` and `evidence-assumptions.md`
@@ -104,7 +102,7 @@ Before launching a subagent, the main agent should preload or summarize the most
 relevant instructions from:
 - `references/view-checklists.md`
 - `references/drawio-dsl.md`
-- `references/4plus1-rules.md`
+- `references/3plus1-rules.md`
 - `references/runtime-view-patterns.md` for runtime view
 - any view-specific reference the subagent must obey
 
@@ -144,7 +142,7 @@ Read these first when needed:
 - [references/view-checklists.md](references/view-checklists.md): what each view should explain
 - [references/drawio-dsl.md](references/drawio-dsl.md): expected intermediate model shape
 - [references/runtime-view-patterns.md](references/runtime-view-patterns.md): runtime-view modeling guidance
-- [references/4plus1-rules.md](references/4plus1-rules.md): shared architectural rules
+- [references/3plus1-rules.md](references/3plus1-rules.md): shared architectural rules
 
 Use these scripts in the main-agent completion phase:
 - `scripts/render_drawio.py`: render `.drawio` from the intermediate model

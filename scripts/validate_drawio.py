@@ -389,7 +389,7 @@ def validate_file(xml_path: Path) -> tuple[list[str], list[str]]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Validate generated draw.io files for the 4+1 skill."
+        description="Validate generated draw.io files for the 3+1 skill."
     )
     parser.add_argument(
         "target",

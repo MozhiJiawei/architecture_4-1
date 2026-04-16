@@ -1,6 +1,6 @@
-# 4+1 Rules
+# 3+1 Rules
 
-Use the five standard views as separate but connected explanations of the same system.
+Use the standard views in this skill as separate but connected explanations of the same system.
 
 ## Logic View
 
@@ -41,24 +41,11 @@ Keep the runtime view architecturally parallel to the logic view:
 - prefer readable sequence or collaboration structure over a generic network sketch
 - include branches only when they materially explain auth, failure, retries, or state transitions
 
-## Physical View
+## Use Case View
 
-Show deployment and infrastructure:
-- containers
-- hosts or nodes
-- clusters
-- middleware
-- databases
-- storage
-- networking or ingress
+Use one or more representative use cases to tie the architecture together.
 
-Use evidence from deployment files, infrastructure code, CI/CD files, and production-oriented config.
-
-## Scenario View
-
-Use one or more representative journeys to tie the architecture together.
-
-Prefer scenarios that:
+Prefer use cases that:
 - cross important boundaries
 - expose core responsibilities
 - explain why the architecture is shaped this way

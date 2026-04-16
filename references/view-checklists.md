@@ -43,18 +43,10 @@ Use these checklists while exploring the repository.
 - Does this runtime view explain collaboration structure, rather than drifting into a static module map?
 - Which runtime responsibilities should be collapsed into one participant, such as adapter families, tool backends, or helper modules?
 
-## Physical View Checklist
-
-- What deployment files are present?
-- Are there container images, compose files, or Kubernetes manifests?
-- Which middleware products are configured?
-- What storage systems appear?
-- What network edges or ingress clues exist?
-
-## Scenario View Checklist
+## Use Case View Checklist
 
 - Which user journeys or system flows best explain the architecture?
-- Which scenario touches the most important boundaries?
+- Which use case touches the most important boundaries?
 - What happy path should be shown?
 - What failure or authorization branch matters enough to include?
-- Which components must appear for the scenario to make sense?
+- Which components must appear for the use case to make sense?

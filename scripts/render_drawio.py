@@ -1701,7 +1701,7 @@ def collect_input_models(input_arg: str | None) -> list[Path]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Render draw.io files from intermediate 4+1 view models."
+        description="Render draw.io files from intermediate 3+1 view models."
     )
     parser.add_argument("input", nargs="?", help="Path to a view model or model directory")
     parser.add_argument(

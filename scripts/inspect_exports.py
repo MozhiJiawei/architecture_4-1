@@ -11,11 +11,10 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 REF_MAP = {
-    "logic-view": "\u903b\u8f91\u89c6\u56fe.jpg",
-    "development-view": "\u5f00\u53d1\u89c6\u56fe.jpg",
-    "runtime-view": "\u8fd0\u884c\u89c6\u56fe.jpg",
-    "physical-view": "\u7269\u7406\u89c6\u56fe.jpg",
-    "scenario-view": "\u573a\u666f\u89c6\u56fe.jpg",
+    "logic-view": "logic-view.jpg",
+    "development-view": "development-view.jpg",
+    "runtime-view": "runtime-view.jpg",
+    "use-case-view": "use-case-view.jpg",
 }
 
 

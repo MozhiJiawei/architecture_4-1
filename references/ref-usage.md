@@ -4,7 +4,7 @@ Treat `ref/` as the canonical example set for this skill.
 
 ## How to use the reference images
 
-1. Identify which image corresponds to each of the five 4+1 views.
+1. Identify which image corresponds to each of the four 3+1 views.
 2. Note the recurring structure:
    - grouping boxes
    - lanes or tiers
@@ -21,7 +21,7 @@ Treat `ref/` as the canonical example set for this skill.
 - grouping logic
 - level of abstraction
 - placement of infrastructure and middleware
-- how sequence or scenario information is narrated
+- how sequence or use-case information is narrated
 - the language discipline of labels and captions when the target output language is Chinese
 
 ## What not to borrow blindly

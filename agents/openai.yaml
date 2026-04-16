@@ -1,3 +1,3 @@
-display_name: Generate 4+1 Diagrams
-short_description: Analyze repositories and produce editable 4+1 architecture diagrams aligned to ref/.
-default_prompt: Generate editable draw.io 4+1 architecture diagrams for this repository and place the results under docs/architecture/.
+display_name: Generate 3+1 Diagrams
+short_description: Analyze repositories and produce editable 3+1 architecture diagrams aligned to ref/.
+default_prompt: Generate editable draw.io 3+1 architecture diagrams for this repository and place the results under docs/architecture/.
