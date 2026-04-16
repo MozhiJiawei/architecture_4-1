@@ -1,1 +1,3 @@
 tmp-artifacts/
+__pycache__/
+*.pyc
