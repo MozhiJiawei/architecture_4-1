@@ -14,7 +14,7 @@ REF_MAP = {
     "logic-view": "logic-view.jpg",
     "development-view": "development-view.jpg",
     "runtime-view": "runtime-view.jpg",
-    "use-case-view": "use-case-view.jpg",
+    "use-case-view": "use-case-view.png",
 }
 
 
@@ -154,10 +154,6 @@ def main() -> int:
 
     report_path = write_visual_review_report(target, repo_root, images)
 
-    print("\nSuggested AI visual review prompt:\n")
-    for image_path in images:
-        print(review_prompt_for(image_path, repo_root))
-        print()
     print(f"Visual review report written to: {report_path}")
 
     if all_errors:

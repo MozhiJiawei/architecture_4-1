@@ -2,6 +2,9 @@
 
 Use this reference when building `runtime-view.json` for systems with multiple execution modes, asynchronous workers, platform adapters, or agent loops.
 
+`references/drawio-dsl.md` defines the shared schema.
+`references/renderer-contract.md` defines supported runtime kinds and default rendering behavior.
+
 ## Runtime-first workflow
 
 Do not start by listing modules.

@@ -46,7 +46,10 @@ Use these checklists while exploring the repository.
 ## Use Case View Checklist
 
 - Which user journeys or system flows best explain the architecture?
-- Which use case touches the most important boundaries?
-- What happy path should be shown?
-- What failure or authorization branch matters enough to include?
-- Which components must appear for the use case to make sense?
+- Which actor is primary, and which actors can be omitted without losing the story?
+- What is the main system boundary, and do you really need more than one bounded frame?
+- Are any supposed use cases actually internal components that belong in logic or runtime view instead?
+- Can every non-trivial actor, use case, and relationship be tied back to code, tests, routes, or docs?
+- Which first-class entry surfaces exist, and should they become separate use cases rather than one merged umbrella?
+- Can you enumerate the full core use case set before drawing?
+- Which use cases are P0, P1, and P2?

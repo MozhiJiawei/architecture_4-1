@@ -35,6 +35,7 @@ Each subagent should work in an isolated area under:
 
 The main agent owns review and completion:
 - load the relevant images in `ref/` before dispatching subagents
+- for the use-case reference specifically, use `ref/use-case-view.png`
 - treat `ref/` as read-only visual baseline material
 - do not create, modify, regenerate, or "fill in" reference images
 - do not claim the main agent is "filling in reference diagrams" or "filling in missing evidence files"; its job is to read, compare, and supervise
@@ -100,10 +101,13 @@ At minimum, each subagent prompt should restate these rules in task-specific for
 
 Before launching a subagent, the main agent should preload or summarize the most
 relevant instructions from:
-- `references/view-checklists.md`
 - `references/drawio-dsl.md`
+- `references/renderer-contract.md`
 - `references/3plus1-rules.md`
+- `references/view-checklists.md`
+- `references/logic-view-patterns.md` for logic view
 - `references/runtime-view-patterns.md` for runtime view
+- `references/use-case-view-patterns.md` for use-case view
 - any view-specific reference the subagent must obey
 
 Preload means "read and pass along constraints", not "author missing material".
@@ -123,9 +127,29 @@ Each requested view should usually produce:
 - an intermediate JSON model
 - a short note on evidence, assumptions, and omissions
 
+For use-case view specifically, keep the subagent handoff limited to:
+- `use-case-view.json`
+- `evidence-assumptions.md`
+
+Use-case subagents should treat `use-case-view.json` as the authoritative inventory of user-visible capabilities. The main agent and renderer derive both the table artifact and the grouped all-use-cases diagram from that file.
+
+For use-case modeling, `references/drawio-dsl.md` is the schema authority.
+Keep the prompt aligned to that DSL:
+- use `groups` plus each element's `group` field for actor-based grouping
+- keep use-case `label` short and move explanation into `summary`, `description`, `uncertainties`, or the evidence note
+- in `use-case-view.json`, keep each row on the canonical DSL fields `id`, optional `code`, `label`, `primary_actor`, optional `secondary_actors`, `entry_surfaces`, `priority`, and `summary`
+- reserve `编号`、`用例`、`主参与者`、`入口面`、`优先级`、`说明` for rendered table columns, not JSON row keys
+- the renderer derives actor panels, use-case elements, and priority coloring from that single file
+- assign priority by user-facing role: `P0` for end-user functional capabilities, `P1` for systems that directly support `P0`, and `P2` for maintenance, governance, monitoring, and security-management capabilities
+- use `associations` only as optional actor-participation metadata; they render only when `render: true`
+- keep visible spacing between nested frames and actor panels
+
+Do not ask a use-case subagent to emit draw.io XML, screenshots, or final prose summaries unless the user explicitly asks. The single `use-case-view.json` file is the contract between the subagent and the main agent.
+
 The main agent should then produce:
-- an editable `.drawio`
-- an exported preview image or SVG
+- for use-case work, a table-style `.drawio` and export derived from `use-case-view.json`
+- an editable grouped all-use-cases `.drawio` derived from `use-case-view.json`
+- an exported preview image or SVG for each rendered artifact
 - validation and visual review results
 
 Treat repository understanding as AI-led work. Use scripts to help with rendering, exporting, validation, or repetitive extraction, but do not rely on scripts to invent the architecture for you.
@@ -139,10 +163,13 @@ Prefer a readable, evidence-backed subset over a bloated diagram.
 Read these first when needed:
 - [references/ref-usage.md](references/ref-usage.md): how to use `ref/` as the visual baseline
 - [references/style-profiles.md](references/style-profiles.md): style constraints
-- [references/view-checklists.md](references/view-checklists.md): what each view should explain
-- [references/drawio-dsl.md](references/drawio-dsl.md): expected intermediate model shape
-- [references/runtime-view-patterns.md](references/runtime-view-patterns.md): runtime-view modeling guidance
+- [references/drawio-dsl.md](references/drawio-dsl.md): shared intermediate-model schema only
+- [references/renderer-contract.md](references/renderer-contract.md): supported renderer types, kinds, aliases, and default behavior
 - [references/3plus1-rules.md](references/3plus1-rules.md): shared architectural rules
+- [references/view-checklists.md](references/view-checklists.md): what each view should explain
+- [references/logic-view-patterns.md](references/logic-view-patterns.md): logic-specific modeling strategy
+- [references/runtime-view-patterns.md](references/runtime-view-patterns.md): runtime-specific modeling strategy
+- [references/use-case-view-patterns.md](references/use-case-view-patterns.md): use-case-specific modeling strategy
 
 Use these scripts in the main-agent completion phase:
 - `scripts/render_drawio.py`: render `.drawio` from the intermediate model
@@ -153,8 +180,8 @@ Use these scripts in the main-agent completion phase:
 
 For normal view generation, split the workflow into two stages:
 1. subagent stage: produce the intermediate JSON and evidence note
-2. main-agent stage: run `python scripts/render_drawio.py <json-path> --output-dir <view-dir> --export-previews --preview-dir <view-dir>\\exports --preview-format png`
-3. main-agent stage: run `python scripts/validate_visual_pipeline.py <view-dir>\\<view>-view.drawio --exports-dir <view-dir>\\exports`
+2. main-agent stage: render every required intermediate JSON artifact, including `use-case-view.json` when the requested view is use-case, by running `python scripts/render_drawio.py <json-path> --output-dir <view-dir> --export-previews --preview-dir <view-dir>\\exports --preview-format png`
+3. main-agent stage: run `python scripts/validate_visual_pipeline.py <drawio-path> --exports-dir <view-dir>\\exports` for each rendered `.drawio`, including the table artifact for use-case work
 4. if rendering or validation fails, save the failing command, stderr summary, and current artifact list into `<view-dir>\\render-validation-failure.md` before replying
 
 Do not ask a subagent to render, export, or validate unless the user explicitly overrides this workflow.
@@ -167,25 +194,51 @@ For all views:
 - mark inferred relationships as inferred
 - say what you intentionally omitted when scope is large
 
+For logic view:
+- prefer stable responsibilities over folder names
+- identify top-level capabilities first
+- group the diagram into readable architectural layers
+- keep dependency directions short and layered
+- read [references/drawio-dsl.md](references/drawio-dsl.md), [references/renderer-contract.md](references/renderer-contract.md), and [references/logic-view-patterns.md](references/logic-view-patterns.md) before modeling
+
 For runtime view:
 - prefer runtime collaboration over static package structure
 - identify the main runtime paths first
 - show lifecycle owners, execution boundaries, state or delivery boundaries, and external systems when they matter
 - preserve ordering clearly enough that the renderer does not need to guess the story
-- read [references/runtime-view-patterns.md](references/runtime-view-patterns.md) before modeling
+- read [references/drawio-dsl.md](references/drawio-dsl.md), [references/renderer-contract.md](references/renderer-contract.md), and [references/runtime-view-patterns.md](references/runtime-view-patterns.md) before modeling
+
+For use-case view:
+- enumerate the core user-visible use case set first, then derive both rendered artifacts from `use-case-view.json`
+- model the user-visible goal set, not the package structure
+- prefer actor and use-case names that read as short user goals or system roles
+- keep the use-case `label` short; move any explanation into `summary` instead of appending it into the rendered name
+- group all-use-cases diagrams with `groups` and each use case element's `group` field
+- keep each actor as the owner of exactly one rendered panel when that grouped layout is used
+- do not draw actor-to-use-case edges unless an association explicitly sets `render: true`
+- include `include`, `extend`, `dependency`, and `generalization` only when they add architectural meaning and do not turn the diagram into a hairball
+- prefer one bounded system frame or a small number of bounded partitions instead of decorative containers
+- keep visible spacing between nested frames; parent and child containers should never read as touching
+- keep use-case labels short enough to fit inside ellipses without sentence wrapping
+- use `include` for mandatory reused behavior and `extend` for conditional or optional behavior
+- add notes in `uncertainties` when a user journey is inferred from routes, handlers, or tests rather than directly documented
+- when the repository exposes multiple first-class operating modes, produce one single-source `use-case-view.json` that can render both the table artifact and the all-use-cases diagram instead of a single representative journey
+- when producing `use-case-view.json`, use the canonical DSL row fields rather than rendered column names
+- read [references/drawio-dsl.md](references/drawio-dsl.md), [references/renderer-contract.md](references/renderer-contract.md), and [references/use-case-view-patterns.md](references/use-case-view-patterns.md) before modeling
 
 ## Completion Standard
 
 Do not treat an intermediate JSON file as finished work.
 
 A requested view is complete only when all of these are true:
-- the `.drawio` file exists
-- the export exists
-- validation has run
-- the main agent has visually compared the export against the matching `ref/` image
+- every required `.drawio` artifact exists
+- every required export exists
+- validation has run for every rendered artifact
+- for use-case work, both the table artifact and the all-use-cases diagram artifact exist
+- the main agent has visually compared each diagram export against the matching `ref/` image when one exists
 
 For delegated work, the subagent-side handoff bar is:
-- the JSON exists
+- the `use-case-view.json` file exists when the assigned view is use-case
 - the evidence/assumptions note exists
 - the final reply includes the absolute paths it wrote plus any unresolved uncertainty that might affect rendering
 

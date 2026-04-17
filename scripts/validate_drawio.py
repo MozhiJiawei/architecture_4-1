@@ -22,6 +22,9 @@ HEX_COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{6}$")
 NON_BUDGET_FILL_COLORS = {"#f8f9fa", "#ffffff"}
 NON_BUDGET_STROKE_COLORS = {"#6c757d", "#1f2937", "#374151"}
 SEMANTIC_COLOR_BUDGET = 4
+MIN_NESTED_GROUP_SIDE_GAP = 32.0
+MIN_NESTED_GROUP_TOP_GAP = 28.0
+MIN_NESTED_GROUP_BOTTOM_GAP = 32.0
 
 
 def is_valid_color(value: str | None) -> bool:
@@ -220,6 +223,42 @@ def edge_points(
     return [start, *parse_waypoints(cell), end]
 
 
+def box_overlap_area(
+    first: tuple[float, float, float, float],
+    second: tuple[float, float, float, float],
+) -> float:
+    fx, fy, fw, fh = first
+    sx, sy, sw, sh = second
+    overlap_x = min(fx + fw, sx + sw) - max(fx, sx)
+    overlap_y = min(fy + fh, sy + sh) - max(fy, sy)
+    if overlap_x <= GEOMETRY_EPSILON or overlap_y <= GEOMETRY_EPSILON:
+        return 0.0
+    return overlap_x * overlap_y
+
+
+def box_contains(
+    outer: tuple[float, float, float, float],
+    inner: tuple[float, float, float, float],
+) -> bool:
+    ox, oy, ow, oh = outer
+    ix, iy, iw, ih = inner
+    return (
+        ix >= ox - GEOMETRY_EPSILON
+        and iy >= oy - GEOMETRY_EPSILON
+        and ix + iw <= ox + ow + GEOMETRY_EPSILON
+        and iy + ih <= oy + oh + GEOMETRY_EPSILON
+    )
+
+
+def is_ancestor(cell_id: str, ancestor_id: str, parent_map: dict[str, str]) -> bool:
+    current = parent_map.get(cell_id, "")
+    while current:
+        if current == ancestor_id:
+            return True
+        current = parent_map.get(current, "")
+    return False
+
+
 def validate_file(xml_path: Path) -> tuple[list[str], list[str]]:
     warnings: list[str] = []
     errors: list[str] = []
@@ -232,6 +271,7 @@ def validate_file(xml_path: Path) -> tuple[list[str], list[str]]:
     if not cells:
         return [], [f"{xml_path}: no mxCell elements found"]
 
+    parent_map = {cell.attrib.get("id", ""): cell.attrib.get("parent", "") for cell in cells}
     vertex_cells = [cell for cell in cells if cell.attrib.get("vertex") == "1"]
     edge_cells = [cell for cell in cells if cell.attrib.get("edge") == "1"]
     swimlanes = [cell for cell in vertex_cells if "swimlane" in cell.attrib.get("style", "")]
@@ -241,7 +281,8 @@ def validate_file(xml_path: Path) -> tuple[list[str], list[str]]:
         errors.append(f"{xml_path}: diagram has no grouping swimlanes")
     if not node_cells:
         errors.append(f"{xml_path}: diagram has no rendered nodes")
-    if not edge_cells:
+    diagram_kind = xml_path.stem.lower()
+    if not edge_cells and diagram_kind != "use-case-catalog-view":
         warnings.append(f"{xml_path}: diagram has no edges")
 
     fill_counter: Counter[str] = Counter()
@@ -317,7 +358,9 @@ def validate_file(xml_path: Path) -> tuple[list[str], list[str]]:
     edge_styles = [parse_style(cell.attrib.get("style", "")) for cell in edge_cells]
     if edge_styles:
         end_arrows = {style.get("endArrow") for style in edge_styles}
-        if len(end_arrows) > 1:
+        allowed_use_case_arrows = {"none", "open", "block"}
+        use_case_arrow_mix = diagram_kind == "use-case-view" and end_arrows.issubset(allowed_use_case_arrows)
+        if len(end_arrows) > 1 and not use_case_arrow_mix:
             warnings.append(f"{xml_path}: inconsistent edge arrow styles ({sorted(end_arrows)})")
         dashed_values = {style.get("dashed", "0") for style in edge_styles}
         if dashed_values - {"0", "1"}:
@@ -335,6 +378,7 @@ def validate_file(xml_path: Path) -> tuple[list[str], list[str]]:
             warnings.append(f"{xml_path}: edge label on {edge_id} ends like prose; prefer short verbs or nouns")
 
     geometries: dict[str, tuple[float, float, float, float]] = {}
+    group_headers: dict[str, float] = {}
     node_obstacles: list[Box] = []
     header_obstacles: list[Box] = []
     for cell in vertex_cells:
@@ -356,9 +400,54 @@ def validate_file(xml_path: Path) -> tuple[list[str], list[str]]:
         if is_group:
             style = parse_style(cell.attrib.get("style", ""))
             header_height = float(style.get("startSize", "44"))
+            group_headers[cell_id] = header_height
             header_obstacles.append(Box(id=cell_id, x=x, y=y, width=width, height=header_height, kind="group-header"))
         else:
             node_obstacles.append(Box(id=cell_id, x=x, y=y, width=width, height=height, kind="node"))
+
+    group_boxes = {
+        cell.attrib.get("id", ""): geometries[cell.attrib.get("id", "")]
+        for cell in swimlanes
+        if cell.attrib.get("id", "") in geometries
+    }
+    group_ids = [cell.attrib.get("id", "") for cell in swimlanes if cell.attrib.get("id", "")]
+
+    for group_id in group_ids:
+        parent_id = parent_map.get(group_id, "")
+        if parent_id not in group_boxes:
+            continue
+        parent_box = group_boxes[parent_id]
+        child_box = group_boxes[group_id]
+        if not box_contains(parent_box, child_box):
+            errors.append(f"{xml_path}: group {group_id} is not fully contained within parent group {parent_id}")
+            continue
+        px, py, pw, ph = parent_box
+        cx, cy, cw, ch = child_box
+        required_top = py + group_headers.get(parent_id, 44.0) + MIN_NESTED_GROUP_TOP_GAP
+        required_left = px + MIN_NESTED_GROUP_SIDE_GAP
+        required_right = px + pw - MIN_NESTED_GROUP_SIDE_GAP
+        required_bottom = py + ph - MIN_NESTED_GROUP_BOTTOM_GAP
+        if cx < required_left - GEOMETRY_EPSILON:
+            errors.append(f"{xml_path}: group {group_id} is too close to the left edge of parent group {parent_id}")
+        if cy < required_top - GEOMETRY_EPSILON:
+            errors.append(f"{xml_path}: group {group_id} overlaps or crowds the header area of parent group {parent_id}")
+        if cx + cw > required_right + GEOMETRY_EPSILON:
+            errors.append(f"{xml_path}: group {group_id} is too close to the right edge of parent group {parent_id}")
+        if cy + ch > required_bottom + GEOMETRY_EPSILON:
+            errors.append(f"{xml_path}: group {group_id} is too close to the bottom edge of parent group {parent_id}")
+
+    for index, first_id in enumerate(group_ids):
+        first_box = group_boxes.get(first_id)
+        if first_box is None:
+            continue
+        for second_id in group_ids[index + 1 :]:
+            second_box = group_boxes.get(second_id)
+            if second_box is None:
+                continue
+            if is_ancestor(first_id, second_id, parent_map) or is_ancestor(second_id, first_id, parent_map):
+                continue
+            if box_overlap_area(first_box, second_box) > GEOMETRY_EPSILON:
+                errors.append(f"{xml_path}: groups {first_id} and {second_id} overlap")
 
     all_segments: list[tuple[str, tuple[tuple[float, float], tuple[float, float]]]] = []
     for cell in edge_cells:

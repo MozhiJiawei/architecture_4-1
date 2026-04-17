@@ -45,9 +45,21 @@ Keep the runtime view architecturally parallel to the logic view:
 
 Use one or more representative use cases to tie the architecture together.
 
+When the system exposes many first-class user-visible operating modes, treat the use-case view as the index into the rest of the 4+1 model:
+- enumerate the core use case set
+- render an all-use-cases picture rather than only one canonical journey
+
 Prefer use cases that:
 - cross important boundaries
 - expose core responsibilities
 - explain why the architecture is shaped this way
 
-Sequence diagrams are often appropriate here.
+Prefer classic use-case diagrams when the goal is to explain actors, system boundary, and reused or conditional user goals.
+
+Use:
+- actors for external roles
+- use cases for user-visible goals
+- `include` for mandatory reused behavior
+- `extend` for conditional or optional behavior
+
+Avoid turning internal components or step-by-step runtime choreography into use cases.
