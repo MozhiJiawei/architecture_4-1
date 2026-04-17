@@ -1333,6 +1333,9 @@ USE_CASE_CATALOG_HEADER_ROW_HEIGHT = 58
 USE_CASE_CATALOG_MIN_PAGE_WIDTH = 1600
 USE_CASE_CATALOG_MIN_PAGE_HEIGHT = 960
 CATALOG_ALLOWED_COLUMNS = ["编号", "用例", "主参与者", "入口面", "优先级", "说明"]
+CATALOG_FULL_TEXT_COLUMNS = {"入口面", "说明"}
+USE_CASE_CATALOG_LINE_HEIGHT = 18
+USE_CASE_CATALOG_ROW_PADDING_Y = 16
 CATALOG_CELL_MAX_CHARS = {
     "编号": 12,
     "用例": 40,
@@ -1353,17 +1356,17 @@ CATALOG_COLUMN_MIN_WIDTHS = {
     "编号": 110,
     "用例": 220,
     "主参与者": 150,
-    "入口面": 220,
+    "入口面": 280,
     "优先级": 110,
-    "说明": 280,
+    "说明": 360,
 }
 CATALOG_COLUMN_MAX_WIDTHS = {
     "编号": 140,
     "用例": 340,
     "主参与者": 220,
-    "入口面": 360,
+    "入口面": 520,
     "优先级": 120,
-    "说明": 520,
+    "说明": 720,
 }
 
 
@@ -2943,6 +2946,24 @@ def catalog_column_width(column: str, cell_values: list[str]) -> int:
     return clamp(estimated, minimum, maximum)
 
 
+def catalog_display_text(column: str, raw_value: str, max_units_per_line: int) -> str:
+    normalized = column.strip()
+    if normalized in CATALOG_FULL_TEXT_COLUMNS:
+        return wrap_text(raw_value, max_units_per_line)
+    max_chars = CATALOG_CELL_MAX_CHARS.get(normalized, 80)
+    max_lines = CATALOG_CELL_MAX_LINES.get(normalized, 3)
+    return capped_display_text(raw_value, max_chars, max_lines, max_units_per_line)
+
+
+def catalog_row_height(row_display_values: dict[str, str]) -> int:
+    max_line_count = 1
+    for value in row_display_values.values():
+        line_count = max(1, len(str(value or "").splitlines()))
+        max_line_count = max(max_line_count, line_count)
+    dynamic_height = (max_line_count * USE_CASE_CATALOG_LINE_HEIGHT) + USE_CASE_CATALOG_ROW_PADDING_Y
+    return max(USE_CASE_CATALOG_ROW_HEIGHT, dynamic_height)
+
+
 def use_case_catalog_sections(view_model: dict[str, Any]) -> list[dict[str, Any]]:
     language = infer_language(view_model)
     use_cases = [item for item in (view_model.get("use_cases") or []) if isinstance(item, dict)]
@@ -3030,10 +3051,8 @@ def build_use_case_catalog_diagram_xml(view_model: dict[str, Any]) -> str:
     for section in sections:
         for use_case in section.get("rows") or []:
             for column in columns:
-                max_chars = CATALOG_CELL_MAX_CHARS.get(column, 80)
-                max_lines = CATALOG_CELL_MAX_LINES.get(column, 3)
                 raw_value = catalog_cell_value(column, use_case, actor_labels)
-                column_display_values[column].append(capped_display_text(raw_value, max_chars, max_lines, 18))
+                column_display_values[column].append(raw_value)
 
     column_widths = {
         column: catalog_column_width(column, column_display_values.get(column, []))
@@ -3041,12 +3060,36 @@ def build_use_case_catalog_diagram_xml(view_model: dict[str, Any]) -> str:
     }
     table_width = sum(column_widths[column] for column in columns)
     page_width = max(USE_CASE_CATALOG_MIN_PAGE_WIDTH, table_width + (2 * USE_CASE_CATALOG_ROOT_MARGIN) + 80)
-    content_height = USE_CASE_CATALOG_HEADER_HEIGHT + 32
+
+    section_row_layouts: list[dict[str, Any]] = []
     for section in sections:
+        row_layouts: list[dict[str, Any]] = []
+        for use_case in section.get("rows") or []:
+            row_display_values: dict[str, str] = {}
+            for column in columns:
+                width = column_widths[column]
+                max_units_per_line = max(10, (width - 32) // 9)
+                row_display_values[column] = catalog_display_text(
+                    column,
+                    catalog_cell_value(column, use_case, actor_labels),
+                    max_units_per_line,
+                )
+            row_layouts.append({
+                "use_case": use_case,
+                "display_values": row_display_values,
+                "height": catalog_row_height(row_display_values),
+            })
+        section_row_layouts.append({
+            "label": section.get("label"),
+            "rows": row_layouts,
+        })
+
+    content_height = USE_CASE_CATALOG_HEADER_HEIGHT + 32
+    for section in section_row_layouts:
         if section.get("label"):
             content_height += 38
         content_height += USE_CASE_CATALOG_HEADER_ROW_HEIGHT
-        content_height += len(section.get("rows") or []) * USE_CASE_CATALOG_ROW_HEIGHT
+        content_height += sum(int(row.get("height") or USE_CASE_CATALOG_ROW_HEIGHT) for row in (section.get("rows") or []))
         content_height += USE_CASE_CATALOG_SECTION_GAP
     page_height = max(USE_CASE_CATALOG_MIN_PAGE_HEIGHT, content_height + (2 * USE_CASE_CATALOG_ROOT_MARGIN))
 
@@ -3104,7 +3147,7 @@ def build_use_case_catalog_diagram_xml(view_model: dict[str, Any]) -> str:
     header_subject = {"color_role": "entry-surface"}
     header_style = effective_subject_style(profile, "node", header_subject)
     body_style = effective_subject_style(profile, "node", {"color_role": "neutral"})
-    for section_index, section in enumerate(sections, start=1):
+    for section_index, section in enumerate(section_row_layouts, start=1):
         section_label = str(section.get("label") or "").strip()
         if section_label:
             label_cell = ET.SubElement(
@@ -3157,27 +3200,23 @@ def build_use_case_catalog_diagram_xml(view_model: dict[str, Any]) -> str:
             x += width
         current_y += USE_CASE_CATALOG_HEADER_ROW_HEIGHT
 
-        for row_index, use_case in enumerate(section.get("rows") or [], start=1):
+        for row_index, row_layout in enumerate(section.get("rows") or [], start=1):
+            use_case = row_layout["use_case"]
+            row_height = int(row_layout.get("height") or USE_CASE_CATALOG_ROW_HEIGHT)
+            display_values = row_layout.get("display_values") or {}
             x = left_x
             for column in columns:
                 width = column_widths[column]
-                max_chars = CATALOG_CELL_MAX_CHARS.get(column, 80)
-                max_lines = CATALOG_CELL_MAX_LINES.get(column, 3)
-                max_units_per_line = max(10, (width - 32) // 9)
-                value = capped_display_text(
-                    catalog_cell_value(column, use_case, actor_labels),
-                    max_chars,
-                    max_lines,
-                    max_units_per_line,
-                )
+                value = str(display_values.get(column) or "")
                 normalized = column.strip()
                 subject_style = (
                     use_case_priority_style(profile, use_case)
                     if normalized == "优先级"
                     else body_style
                 )
-                align = "left" if normalized in {"用例", "说明"} else "center"
+                align = "left" if normalized in {"用例", "入口面", "说明"} else "center"
                 font_style = "fontStyle=1;" if normalized == "优先级" else ""
+                vertical_align = "top" if normalized in CATALOG_FULL_TEXT_COLUMNS else "middle"
                 cell = ET.SubElement(
                     mx_root,
                     "mxCell",
@@ -3185,7 +3224,7 @@ def build_use_case_catalog_diagram_xml(view_model: dict[str, Any]) -> str:
                     value=value,
                     style=(
                         "rounded=0;whiteSpace=wrap;html=1;"
-                        f"{font_style}align={align};verticalAlign=middle;spacingLeft=8;"
+                        f"{font_style}align={align};verticalAlign={vertical_align};spacingLeft=8;spacingTop=6;"
                         f"{style_pairs(subject_style, ('fillColor', 'strokeColor', 'fontColor'))}"
                     ),
                     vertex="1",
@@ -3197,11 +3236,11 @@ def build_use_case_catalog_diagram_xml(view_model: dict[str, Any]) -> str:
                     x=str(x),
                     y=str(current_y),
                     width=str(width),
-                    height=str(USE_CASE_CATALOG_ROW_HEIGHT),
+                    height=str(row_height),
                     attrib={"as": "geometry"},
                 )
                 x += width
-            current_y += USE_CASE_CATALOG_ROW_HEIGHT
+            current_y += row_height
         current_y += USE_CASE_CATALOG_SECTION_GAP
 
     return ET.tostring(root, encoding="unicode")
