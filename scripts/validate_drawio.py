@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from html import unescape
 import re
 from collections import Counter
 from pathlib import Path
@@ -19,8 +20,8 @@ MAX_GROUP_LINES = 2
 MAX_EDGE_LINES = 2
 GEOMETRY_EPSILON = 1e-6
 HEX_COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{6}$")
-NON_BUDGET_FILL_COLORS = {"#f8f9fa", "#ffffff"}
-NON_BUDGET_STROKE_COLORS = {"#6c757d", "#1f2937", "#374151"}
+NON_BUDGET_FILL_COLORS = {"#f8f9fa", "#ffffff", "none"}
+NON_BUDGET_STROKE_COLORS = {"#6c757d", "#1f2937", "#374151", "none"}
 SEMANTIC_COLOR_BUDGET = 4
 MIN_NESTED_GROUP_SIDE_GAP = 32.0
 MIN_NESTED_GROUP_TOP_GAP = 28.0
@@ -49,6 +50,12 @@ def parse_style(style: str) -> dict[str, str]:
     return result
 
 
+def is_text_cell(cell: ET.Element) -> bool:
+    style = parse_style(cell.attrib.get("style", ""))
+    raw_style = cell.attrib.get("style", "")
+    return "text;" in raw_style or style.get("shape") == "text"
+
+
 def iter_targets(target: Path) -> list[Path]:
     if target.is_file():
         return [target]
@@ -63,12 +70,18 @@ def get_root(xml_path: Path) -> ET.Element:
 
 
 def normalize_value(value: str) -> str:
-    return value.replace("&#10;", "\n").strip()
+    text = value.replace("&#10;", "\n")
+    text = re.sub(r"(?i)<br\s*/?>", "\n", text)
+    text = re.sub(r"(?i)</(div|tr|p|li|table)>", "\n", text)
+    text = re.sub(r"(?i)<li[^>]*>", "- ", text)
+    text = re.sub(r"(?i)<[^>]+>", "", text)
+    text = unescape(text).replace("\xa0", " ")
+    return text.strip()
 
 
 def count_lines(value: str) -> int:
     text = normalize_value(value)
-    return len(text.splitlines()) if text else 0
+    return len([line for line in text.splitlines() if line.strip()]) if text else 0
 
 
 def plain_length(value: str) -> int:
@@ -380,6 +393,7 @@ def validate_file(xml_path: Path) -> tuple[list[str], list[str]]:
     geometries: dict[str, tuple[float, float, float, float]] = {}
     group_headers: dict[str, float] = {}
     node_obstacles: list[Box] = []
+    label_obstacles: list[Box] = []
     header_obstacles: list[Box] = []
     for cell in vertex_cells:
         geometry = cell.find("./mxGeometry")
@@ -402,6 +416,9 @@ def validate_file(xml_path: Path) -> tuple[list[str], list[str]]:
             header_height = float(style.get("startSize", "44"))
             group_headers[cell_id] = header_height
             header_obstacles.append(Box(id=cell_id, x=x, y=y, width=width, height=header_height, kind="group-header"))
+        elif is_text_cell(cell):
+            if cell_id.startswith("edge-label-"):
+                label_obstacles.append(Box(id=cell_id, x=x, y=y, width=width, height=height, kind="edge-label"))
         else:
             node_obstacles.append(Box(id=cell_id, x=x, y=y, width=width, height=height, kind="node"))
 
@@ -448,6 +465,20 @@ def validate_file(xml_path: Path) -> tuple[list[str], list[str]]:
                 continue
             if box_overlap_area(first_box, second_box) > GEOMETRY_EPSILON:
                 errors.append(f"{xml_path}: groups {first_id} and {second_id} overlap")
+
+    for label in label_obstacles:
+        label_box = (label.x, label.y, label.width, label.height)
+        for node in node_obstacles:
+            node_box = (node.x, node.y, node.width, node.height)
+            if box_overlap_area(label_box, node_box) > GEOMETRY_EPSILON:
+                errors.append(f"{xml_path}: label {label.id} overlaps node {node.id}")
+
+    for index, first in enumerate(label_obstacles):
+        first_box = (first.x, first.y, first.width, first.height)
+        for second in label_obstacles[index + 1 :]:
+            second_box = (second.x, second.y, second.width, second.height)
+            if box_overlap_area(first_box, second_box) > GEOMETRY_EPSILON:
+                errors.append(f"{xml_path}: labels {first.id} and {second.id} overlap")
 
     all_segments: list[tuple[str, tuple[tuple[float, float], tuple[float, float]]]] = []
     for cell in edge_cells:

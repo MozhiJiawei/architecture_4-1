@@ -1,0 +1,39 @@
+{
+  "view": "development",
+  "title": "Invalid Duplicate Edge Fixture",
+  "summary": "Shows duplicate edge validation.",
+  "style_profile": "ref-default",
+  "canvas": {"width": 1680, "height": 1080},
+  "legend": {
+    "title": "Legend",
+    "frame": {"x": 1416, "y": 32, "width": 220, "height": 150},
+    "items": [
+      {"label": "Orchestration", "color_role": "blue"},
+      {"label": "Workflow", "color_role": "green"},
+      {"label": "Agent", "color_role": "purple"},
+      {"label": "Support", "color_role": "yellow"}
+    ]
+  },
+  "groups": [
+    {"id": "orchestration", "label": "Orchestration", "color_role": "blue", "frame": {"x": 80, "y": 96, "width": 1320, "height": 220}},
+    {"id": "agent", "label": "Agent", "color_role": "purple", "frame": {"x": 520, "y": 96, "width": 440, "height": 240}},
+    {"id": "workflow", "label": "Workflow", "color_role": "green", "frame": {"x": 80, "y": 360, "width": 1320, "height": 280}},
+    {"id": "support", "label": "Support", "color_role": "yellow", "frame": {"x": 80, "y": 684, "width": 1320, "height": 240}}
+  ],
+  "elements": [
+    {"id": "outer-loop", "label": "DGM_outer", "type": "subsystem", "group": "orchestration", "code_kind": "script-suite", "paths": ["DGM_outer.py"], "responsibility": "Coordinates multi-generation development-view export runs and chooses the next self-improvement work item.", "exposes": ["main()", "choose_selfimproves()", "update_archive()"], "frame": {"x": 96, "y": 120, "width": 320, "height": 180}, "ports": {"left": {"x": 96, "y": 210}, "right": {"x": 416, "y": 210}, "top": {"x": 256, "y": 120}, "bottom": {"x": 256, "y": 300}}},
+    {"id": "agent-core", "label": "Agent core", "type": "subsystem", "group": "agent", "code_kind": "module", "paths": ["coding_agent.py", "llm_withtools.py"], "responsibility": "Provides a stable coding-agent runtime that both validation and rendering fixtures can reference.", "exposes": ["AgenticSystem.forward()", "chat_with_agent()", "main() CLI"], "frame": {"x": 620, "y": 120, "width": 340, "height": 190}, "ports": {"left": {"x": 620, "y": 215}, "right": {"x": 960, "y": 215}, "top": {"x": 790, "y": 120}, "bottom": {"x": 790, "y": 310}}},
+    {"id": "self-improve-step", "label": "self_improve_step", "type": "component", "group": "workflow", "code_kind": "module", "paths": ["self_improve_step.py"], "responsibility": "Builds the unified development layout, invokes the structure validator, and prepares export-ready relationships.", "exposes": ["self_improve()", "build_layout()", "main() CLI"], "frame": {"x": 620, "y": 396, "width": 340, "height": 210}, "ports": {"left": {"x": 620, "y": 501}, "right": {"x": 960, "y": 501}, "top": {"x": 790, "y": 396}, "bottom": {"x": 790, "y": 606}}},
+    {"id": "eval-swe", "label": "SWE harness", "type": "subsystem", "group": "workflow", "code_kind": "package", "paths": ["swe_bench/harness.py"], "responsibility": "Runs development-view regression checks against the exported draw.io result and confirms geometry constraints still hold.", "exposes": ["harness()", "report()"], "frame": {"x": 1080, "y": 400, "width": 260, "height": 200}, "ports": {"left": {"x": 1080, "y": 500}, "right": {"x": 1340, "y": 500}, "top": {"x": 1210, "y": 400}, "bottom": {"x": 1210, "y": 600}}},
+    {"id": "prompt-suite", "label": "Prompt suite", "type": "component", "group": "support", "code_kind": "shared-lib", "paths": ["prompts/self_improvement_prompt.py"], "responsibility": "Stores label text and responsibility summaries used by the renderer without collapsing or truncating semantic content.", "exposes": ["get_problem_description_prompt()", "get_test_description()"], "frame": {"x": 96, "y": 724, "width": 330, "height": 190}, "ports": {"left": {"x": 96, "y": 819}, "right": {"x": 426, "y": 819}, "top": {"x": 261, "y": 724}, "bottom": {"x": 261, "y": 914}}},
+    {"id": "container-runtime", "label": "Container runtime", "type": "component", "group": "support", "code_kind": "adapter", "paths": ["utils/docker_utils.py", "utils/git_utils.py"], "responsibility": "Writes draw.io XML artifacts and preview outputs after the structure validator has approved the shared model.", "exposes": ["build_dgm_container()", "diff_versus_commit()", "export_with_real_drawio()"], "frame": {"x": 620, "y": 720, "width": 340, "height": 200}, "ports": {"left": {"x": 620, "y": 820}, "right": {"x": 960, "y": 820}, "top": {"x": 790, "y": 720}, "bottom": {"x": 790, "y": 920}}}
+  ],
+  "relationships": [
+    {"id": "rel-outer-to-self", "source": "outer-loop", "target": "self-improve-step", "source_port": "right", "target_port": "left", "label": "dispatch structured export", "kind": "dependency", "core": true, "segments": [{"start": {"x": 416, "y": 210}, "end": {"x": 620, "y": 501}}], "label_box": {"x": 458, "y": 284, "width": 124, "height": 44}},
+    {"id": "rel-outer-to-self-copy", "source": "outer-loop", "target": "self-improve-step", "source_port": "right", "target_port": "left", "label": "dispatch structured export", "kind": "dependency", "core": false, "segments": [{"start": {"x": 416, "y": 210}, "end": {"x": 620, "y": 501}}], "label_box": {"x": 330, "y": 332, "width": 124, "height": 44}},
+    {"id": "rel-self-to-agent", "source": "self-improve-step", "target": "agent-core", "source_port": "top", "target_port": "bottom", "label": "run shared model checks", "kind": "dependency", "core": true, "segments": [{"start": {"x": 790, "y": 396}, "end": {"x": 790, "y": 310}}], "label_box": {"x": 834, "y": 324, "width": 128, "height": 44}},
+    {"id": "rel-self-to-eval", "source": "self-improve-step", "target": "eval-swe", "source_port": "right", "target_port": "left", "label": "publish drawio result", "kind": "dependency", "core": true, "segments": [{"start": {"x": 960, "y": 501}, "end": {"x": 1080, "y": 500}}], "label_box": {"x": 962, "y": 446, "width": 116, "height": 44}},
+    {"id": "rel-self-to-container", "source": "self-improve-step", "target": "container-runtime", "source_port": "bottom", "target_port": "top", "label": "write final artifact", "kind": "dependency", "core": true, "segments": [{"start": {"x": 790, "y": 606}, "end": {"x": 790, "y": 720}}], "label_box": {"x": 834, "y": 628, "width": 122, "height": 44}},
+    {"id": "rel-prompt-to-container", "source": "prompt-suite", "target": "container-runtime", "source_port": "right", "target_port": "left", "label": "share full labels", "kind": "dependency", "core": false, "segments": [{"start": {"x": 426, "y": 819}, "end": {"x": 620, "y": 820}}], "label_box": {"x": 456, "y": 762, "width": 120, "height": 40}}
+  ]
+}

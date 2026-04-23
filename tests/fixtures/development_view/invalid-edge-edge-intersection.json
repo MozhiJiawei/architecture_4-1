@@ -1,0 +1,29 @@
+{
+  "view": "development",
+  "title": "Invalid Edge Edge Intersection Fixture",
+  "summary": "Shows edge-edge intersection validation.",
+  "style_profile": "ref-default",
+  "canvas": {"width": 1200, "height": 700},
+  "legend": {
+    "title": "Legend",
+    "frame": {"x": 940, "y": 32, "width": 220, "height": 120},
+    "items": [
+      {"label": "Orchestration", "color_role": "blue"},
+      {"label": "Workflow", "color_role": "green"}
+    ]
+  },
+  "groups": [
+    {"id": "orchestration", "label": "Orchestration", "color_role": "blue", "frame": {"x": 60, "y": 80, "width": 1080, "height": 240}},
+    {"id": "workflow", "label": "Workflow", "color_role": "green", "frame": {"x": 60, "y": 360, "width": 1080, "height": 240}}
+  ],
+  "elements": [
+    {"id": "top-left", "label": "Top Left", "type": "component", "group": "orchestration", "code_kind": "module", "paths": ["a.py"], "responsibility": "Provides one corner node for crossing-edge checks.", "exposes": ["run()"], "frame": {"x": 120, "y": 120, "width": 220, "height": 120}, "ports": {"right": {"x": 340, "y": 180}, "bottom": {"x": 230, "y": 240}, "left": {"x": 120, "y": 180}, "top": {"x": 230, "y": 120}}},
+    {"id": "top-right", "label": "Top Right", "type": "component", "group": "orchestration", "code_kind": "module", "paths": ["b.py"], "responsibility": "Provides one corner node for crossing-edge checks.", "exposes": ["run()"], "frame": {"x": 760, "y": 120, "width": 220, "height": 120}, "ports": {"right": {"x": 980, "y": 180}, "bottom": {"x": 870, "y": 240}, "left": {"x": 760, "y": 180}, "top": {"x": 870, "y": 120}}},
+    {"id": "bottom-left", "label": "Bottom Left", "type": "component", "group": "workflow", "code_kind": "module", "paths": ["c.py"], "responsibility": "Provides one corner node for crossing-edge checks.", "exposes": ["run()"], "frame": {"x": 120, "y": 420, "width": 220, "height": 120}, "ports": {"right": {"x": 340, "y": 480}, "bottom": {"x": 230, "y": 540}, "left": {"x": 120, "y": 480}, "top": {"x": 230, "y": 420}}},
+    {"id": "bottom-right", "label": "Bottom Right", "type": "component", "group": "workflow", "code_kind": "module", "paths": ["d.py"], "responsibility": "Provides one corner node for crossing-edge checks.", "exposes": ["run()"], "frame": {"x": 760, "y": 420, "width": 220, "height": 120}, "ports": {"right": {"x": 980, "y": 480}, "bottom": {"x": 870, "y": 540}, "left": {"x": 760, "y": 480}, "top": {"x": 870, "y": 420}}}
+  ],
+  "relationships": [
+    {"id": "rel-diag-a", "source": "top-left", "target": "bottom-right", "source_port": "right", "target_port": "left", "label": "diagonal a", "kind": "dependency", "core": true, "segments": [{"start": {"x": 340, "y": 180}, "end": {"x": 760, "y": 480}}], "label_box": {"x": 460, "y": 240, "width": 100, "height": 36}},
+    {"id": "rel-diag-b", "source": "top-right", "target": "bottom-left", "source_port": "left", "target_port": "right", "label": "diagonal b", "kind": "dependency", "core": true, "segments": [{"start": {"x": 760, "y": 180}, "end": {"x": 340, "y": 480}}], "label_box": {"x": 580, "y": 240, "width": 100, "height": 36}}
+  ]
+}

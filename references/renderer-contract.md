@@ -8,6 +8,7 @@ It is intentionally separate from [`drawio-dsl.md`](drawio-dsl.md), which only d
 
 The renderer currently supports:
 - `logic`
+- `development`
 - `runtime`
 - `use-case`
 - `use-case-catalog`
@@ -81,6 +82,17 @@ If a relationship does not need to be drawn, set `render: false` instead of inve
 - Runtime renderers rely on ordered runtime participants and readable lane/group ordering.
 - Stable relationship `id` values are preferred when runtime paths reference ordered steps.
 - Runtime scenes are expected to preserve primary-path readability rather than render a global topology superset.
+
+## Development Rendering Contract
+
+- Development view renders a layered code/module view rather than a runtime path.
+- Render the full development `relationships` inventory unless the user explicitly asks for a reduced subset.
+- Render edges as straight lines with direct anchors, not hand-authored orthogonal routes.
+- Keep module cards visually table-like, but do not drop development semantics that are already present in the JSON.
+- Render `responsibility` completely, allowing wrapped display text when needed.
+- Render every `exposes` item and place each interface on its own display line.
+- Express `group` by color and a top-right legend rather than relying on group frames.
+- If a development view is too dense to render cleanly, prefer simplifying the intermediate model over adding renderer-specific exceptions.
 
 ## Use-Case Rendering Contract
 

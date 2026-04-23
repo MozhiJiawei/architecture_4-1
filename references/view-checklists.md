@@ -22,6 +22,11 @@ Use these checklists while exploring the repository.
 - Which packages are shared utilities versus domain modules?
 - Are there layering rules in naming or folder structure?
 - Which dependencies point inward versus outward?
+- Which code units directly realize the target use case, and which are only incidental helpers?
+- Would a developer maintain these files as one module or as separate owned units?
+- Which edges are compile-time, import-time, packaging, or script-to-module dependencies rather than runtime sequence steps?
+- Are generated artifacts, logs, caches, and experiment outputs being kept out of the view?
+- Is the grouping scheme about code ownership/layering rather than actors or runtime lanes?
 
 ## Runtime View Checklist
 

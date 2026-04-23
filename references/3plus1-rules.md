@@ -22,6 +22,8 @@ Show how the codebase is organized for developers:
 - ownership or layering boundaries
 
 Prefer compile-time and packaging relationships over runtime chatter.
+Prefer maintained code units over raw folders.
+When the user names a core use case, filter the development view to the code that realizes that use case before adding shared support modules.
 
 ## Runtime View
 

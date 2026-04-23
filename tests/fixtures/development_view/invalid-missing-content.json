@@ -1,0 +1,69 @@
+{
+  "view": "development",
+  "title": "Invalid Missing Content Fixture",
+  "summary": "Shows missing responsibility and exposes validation.",
+  "style_profile": "ref-default",
+  "canvas": {"width": 980, "height": 640},
+  "legend": {
+    "title": "Legend",
+    "frame": {"x": 724, "y": 32, "width": 220, "height": 120},
+    "items": [
+      {"label": "Workflow", "color_role": "green"},
+      {"label": "Support", "color_role": "yellow"}
+    ]
+  },
+  "groups": [
+    {"id": "workflow", "label": "Workflow", "color_role": "green", "frame": {"x": 60, "y": 80, "width": 860, "height": 220}},
+    {"id": "support", "label": "Support", "color_role": "yellow", "frame": {"x": 60, "y": 340, "width": 860, "height": 220}}
+  ],
+  "elements": [
+    {
+      "id": "layout",
+      "label": "Layout model",
+      "type": "component",
+      "group": "workflow",
+      "code_kind": "module",
+      "paths": ["development_layout.py"],
+      "responsibility": "",
+      "exposes": [],
+      "frame": {"x": 120, "y": 120, "width": 300, "height": 140},
+      "ports": {
+        "left": {"x": 120, "y": 190},
+        "right": {"x": 420, "y": 190},
+        "top": {"x": 270, "y": 120},
+        "bottom": {"x": 270, "y": 260}
+      }
+    },
+    {
+      "id": "renderer",
+      "label": "Renderer",
+      "type": "component",
+      "group": "support",
+      "code_kind": "module",
+      "paths": ["renderer.py"],
+      "responsibility": "Consumes the shared model and emits the final draw.io output.",
+      "exposes": ["render()"],
+      "frame": {"x": 520, "y": 380, "width": 300, "height": 140},
+      "ports": {
+        "left": {"x": 520, "y": 450},
+        "right": {"x": 820, "y": 450},
+        "top": {"x": 670, "y": 380},
+        "bottom": {"x": 670, "y": 520}
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-layout-renderer",
+      "source": "layout",
+      "target": "renderer",
+      "source_port": "bottom",
+      "target_port": "top",
+      "label": "render layout",
+      "kind": "dependency",
+      "core": true,
+      "segments": [{"start": {"x": 270, "y": 260}, "end": {"x": 670, "y": 380}}],
+      "label_box": {"x": 392, "y": 286, "width": 120, "height": 36}
+    }
+  ]
+}

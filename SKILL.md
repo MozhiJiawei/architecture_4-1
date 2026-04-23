@@ -106,6 +106,7 @@ relevant instructions from:
 - `references/3plus1-rules.md`
 - `references/view-checklists.md`
 - `references/logic-view-patterns.md` for logic view
+- `references/development-view-patterns.md` for development view
 - `references/runtime-view-patterns.md` for runtime view
 - `references/use-case-view-patterns.md` for use-case view
 - any view-specific reference the subagent must obey
@@ -131,6 +132,15 @@ For use-case view specifically, keep the subagent handoff limited to:
 - `use-case-view.json`
 - `evidence-assumptions.md`
 
+For development view specifically, keep the subagent handoff limited to:
+- `development-view.json`
+- `evidence-assumptions.md`
+
+Current status note for development view:
+- the schema is fixed and should be used now for subagent-generated intermediate files
+- the renderer now supports `view: "development"` with full straight-line dependency rendering
+- unless the user explicitly asks for renderer work, subagents should still stop after the JSON model and evidence note
+
 Use-case subagents should treat `use-case-view.json` as the authoritative inventory of user-visible capabilities. The main agent and renderer derive both the table artifact and the grouped all-use-cases diagram from that file.
 
 For use-case modeling, `references/drawio-dsl.md` is the schema authority.
@@ -144,6 +154,24 @@ Keep the prompt aligned to that DSL:
 - use `associations` only as optional actor-participation metadata; they render only when `render: true`
 - keep visible spacing between nested frames and actor panels
 
+For development modeling, `references/drawio-dsl.md` remains the schema authority and `references/development-view-patterns.md` defines the fixed handoff contract.
+Keep the prompt aligned to that contract:
+- model developer-facing code units, not a raw directory tree
+- start from the user-named use case and follow the code that realizes it
+- emit `development-view.json` with the shared DSL plus development-specific fields such as `build_roots`, `module_dependencies`, `ownership_notes`, element-level `code_kind`, `paths`, and `responsibility` when they help
+- keep labels short and move filesystem detail into `paths`, evidence, or notes
+- use `kind: "dependency"` for code/package relationships unless a future renderer contract defines something more specific
+- collapse helper fragments into one maintained module when that is how developers reason about the code
+- keep `responsibility` complete in the JSON even if the renderer later wraps it for display
+- keep `exposes` lossless: one interface or entrypoint per array item, with no pre-merged summary line
+- render development dependencies as straight lines rather than hand-authored orthogonal routes
+- keep `relationships` complete because the development renderer may draw the full edge inventory
+- use `group` for semantic color coding and legend generation rather than assuming the picture will use group frames
+- when a development view is hard to render cleanly, prune the JSON before asking for renderer exceptions
+- prune in this order: low-information support/utils nodes first, theme-weak secondary nodes second, core business nodes last
+- never delete the core business relationships that explain the target use case
+- record every pruning decision in `evidence-assumptions.md`
+
 Do not ask a use-case subagent to emit draw.io XML, screenshots, or final prose summaries unless the user explicitly asks. The single `use-case-view.json` file is the contract between the subagent and the main agent.
 
 The main agent should then produce:
@@ -151,6 +179,11 @@ The main agent should then produce:
 - an editable grouped all-use-cases `.drawio` derived from `use-case-view.json`
 - an exported preview image or SVG for each rendered artifact
 - validation and visual review results
+
+For development work in the current phase, the main agent should:
+- review `development-view.json` against `ref/development-view.jpg`, `references/development-view-patterns.md`, and the use-case conclusion that drove the selection
+- request targeted refinement if the module cut, grouping, or dependency story is weak
+- render, export, and visually review the development view when the user asks for the picture, while keeping the edge set sparse
 
 Treat repository understanding as AI-led work. Use scripts to help with rendering, exporting, validation, or repetitive extraction, but do not rely on scripts to invent the architecture for you.
 
@@ -168,6 +201,7 @@ Read these first when needed:
 - [references/3plus1-rules.md](references/3plus1-rules.md): shared architectural rules
 - [references/view-checklists.md](references/view-checklists.md): what each view should explain
 - [references/logic-view-patterns.md](references/logic-view-patterns.md): logic-specific modeling strategy
+- [references/development-view-patterns.md](references/development-view-patterns.md): development/code-view intermediate-model contract
 - [references/runtime-view-patterns.md](references/runtime-view-patterns.md): runtime-specific modeling strategy
 - [references/use-case-view-patterns.md](references/use-case-view-patterns.md): use-case-specific modeling strategy
 
@@ -200,6 +234,17 @@ For logic view:
 - group the diagram into readable architectural layers
 - keep dependency directions short and layered
 - read [references/drawio-dsl.md](references/drawio-dsl.md), [references/renderer-contract.md](references/renderer-contract.md), and [references/logic-view-patterns.md](references/logic-view-patterns.md) before modeling
+
+For development view:
+- prefer code ownership, package boundaries, and maintained module cuts over runtime sequencing
+- start from the target use case and keep only the code units needed to explain that slice plus its shared support modules
+- use `paths` and evidence to anchor each module in the repository, but keep rendered labels short
+- treat generated outputs, caches, logs, and run directories as omissions unless the user explicitly wants them
+- render straight dependency lines only; do not introduce hand-authored orthogonal polylines for development view
+- expect development group meaning to be expressed by color and legend instead of boxed lanes
+- if a first-pass model renders poorly, tell the subagent to remove noisy support/utils nodes before touching the core path
+- do not keep a support node just because many modules depend on it; keep it only when it materially improves understanding of the target theme
+- read [references/drawio-dsl.md](references/drawio-dsl.md), [references/renderer-contract.md](references/renderer-contract.md), and [references/development-view-patterns.md](references/development-view-patterns.md) before modeling
 
 For runtime view:
 - prefer runtime collaboration over static package structure

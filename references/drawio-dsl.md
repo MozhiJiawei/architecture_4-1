@@ -95,6 +95,11 @@ Common top-level fields across views:
 
 View-specific top-level fields may exist when a matching `*-view-patterns.md` file defines them.
 
+Development-specific top-level fields may include:
+- `build_roots`
+- `module_dependencies`
+- `ownership_notes`
+
 ## Shared Modeling Rules
 
 - Keep stable IDs per element.
@@ -120,6 +125,13 @@ Elements are usually objects with fields such as:
 - optional `evidence_ids`
 
 Additional element fields may exist when a view pattern defines them.
+
+Development-oriented element fields may include:
+- optional `code_kind`
+- optional `paths`
+- optional `responsibility`
+- optional `exposes`
+- optional `depends_on`
 
 ## Shared Relationship Shape
 

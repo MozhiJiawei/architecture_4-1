@@ -1,0 +1,69 @@
+{
+  "view": "development",
+  "title": "Invalid Sparse Layout Fixture",
+  "summary": "Shows compactness warning without geometry errors.",
+  "style_profile": "ref-default",
+  "canvas": {"width": 3200, "height": 2200},
+  "legend": {
+    "title": "Legend",
+    "frame": {"x": 2920, "y": 32, "width": 220, "height": 120},
+    "items": [
+      {"label": "Orchestration", "color_role": "blue"},
+      {"label": "Workflow", "color_role": "green"}
+    ]
+  },
+  "groups": [
+    {"id": "orchestration", "label": "Orchestration", "color_role": "blue", "frame": {"x": 80, "y": 96, "width": 1100, "height": 260}},
+    {"id": "workflow", "label": "Workflow", "color_role": "green", "frame": {"x": 80, "y": 1600, "width": 1100, "height": 260}}
+  ],
+  "elements": [
+    {
+      "id": "entry",
+      "label": "Entry",
+      "type": "subsystem",
+      "group": "orchestration",
+      "code_kind": "script-suite",
+      "paths": ["entry.py"],
+      "responsibility": "Starts the sparse-layout fixture.",
+      "exposes": ["main()"],
+      "frame": {"x": 120, "y": 140, "width": 300, "height": 140},
+      "ports": {
+        "left": {"x": 120, "y": 210},
+        "right": {"x": 420, "y": 210},
+        "top": {"x": 270, "y": 140},
+        "bottom": {"x": 270, "y": 280}
+      }
+    },
+    {
+      "id": "validator",
+      "label": "Validator",
+      "type": "component",
+      "group": "workflow",
+      "code_kind": "module",
+      "paths": ["validator.py"],
+      "responsibility": "Checks sparse geometry without introducing overlaps.",
+      "exposes": ["validate()"],
+      "frame": {"x": 120, "y": 1660, "width": 320, "height": 150},
+      "ports": {
+        "left": {"x": 120, "y": 1735},
+        "right": {"x": 440, "y": 1735},
+        "top": {"x": 280, "y": 1660},
+        "bottom": {"x": 280, "y": 1810}
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-entry-validator",
+      "source": "entry",
+      "target": "validator",
+      "source_port": "bottom",
+      "target_port": "top",
+      "label": "validate sparse geometry",
+      "kind": "dependency",
+      "core": true,
+      "segments": [{"start": {"x": 270, "y": 280}, "end": {"x": 280, "y": 1660}}],
+      "label_box": {"x": 332, "y": 916, "width": 140, "height": 40}
+    }
+  ]
+}

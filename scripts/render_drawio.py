@@ -10,6 +10,7 @@ from xml.etree import ElementTree as ET
 
 from orthogonal_router import Box, route_edge, style_for_ports
 from style_profiles import effective_subject_style, resolve_style_profile
+from render_development_view import build_development_diagram_xml
 
 
 PAGE_MIN_SIDE = 1500
@@ -226,6 +227,8 @@ def drawio_filename_for_view(view_model: dict[str, Any], source_path: Path) -> s
     view = str(view_model.get("view") or source_path.stem).strip().lower()
     if not view:
         view = "diagram"
+    if view == "development":
+        return f"{source_path.stem}.drawio"
     suffix = "-view" if not view.endswith("-view") else ""
     return f"{view}{suffix}.drawio"
 
@@ -3249,14 +3252,16 @@ def build_use_case_catalog_diagram_xml(view_model: dict[str, Any]) -> str:
 def render_view_model(input_path: Path, output_dir: Path) -> Path:
     view_model = load_view_model(input_path)
     view = str(view_model.get("view") or "").strip().lower()
-    if view not in {"logic", "runtime", "use-case", "use-case-catalog"}:
+    if view not in {"development", "logic", "runtime", "use-case", "use-case-catalog"}:
         raise ValueError(
-            f"Only logic, runtime, use-case, and use-case-catalog view rendering are supported right now; got view={view!r} in {input_path}"
+            f"Only development, logic, runtime, use-case, and use-case-catalog view rendering are supported right now; got view={view!r} in {input_path}"
         )
 
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / drawio_filename_for_view(view_model, input_path)
-    if view == "logic":
+    if view == "development":
+        xml = build_development_diagram_xml(view_model)
+    elif view == "logic":
         xml = build_logic_diagram_xml(view_model)
     elif view == "runtime":
         xml = build_runtime_diagram_xml(view_model)
