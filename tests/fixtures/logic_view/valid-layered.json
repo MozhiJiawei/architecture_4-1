@@ -1,0 +1,71 @@
+{
+  "view": "logic",
+  "title": "Logic View Fixture",
+  "summary": "Small layered model used to protect logic renderer behavior.",
+  "style_profile": "ref-default",
+  "layout_suggestion": {
+    "strategy": "stacked-groups"
+  },
+  "groups": [
+    {
+      "id": "entry",
+      "label": "Entry Layer",
+      "layout_hint": {
+        "order": 1
+      }
+    },
+    {
+      "id": "core",
+      "label": "Core Layer",
+      "layout_hint": {
+        "order": 2
+      }
+    },
+    {
+      "id": "data",
+      "label": "Data Layer",
+      "layout_hint": {
+        "order": 3
+      }
+    }
+  ],
+  "elements": [
+    {
+      "id": "web-app",
+      "label": "Web App",
+      "type": "interface",
+      "group": "entry",
+      "color_role": "blue"
+    },
+    {
+      "id": "case-service",
+      "label": "Case Service",
+      "type": "service",
+      "group": "core",
+      "color_role": "green"
+    },
+    {
+      "id": "case-store",
+      "label": "Case Store",
+      "type": "database",
+      "group": "data",
+      "color_role": "yellow"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "web-to-service",
+      "source": "web-app",
+      "target": "case-service",
+      "label": "submits",
+      "kind": "sync"
+    },
+    {
+      "id": "service-to-store",
+      "source": "case-service",
+      "target": "case-store",
+      "label": "persists",
+      "kind": "state"
+    }
+  ]
+}

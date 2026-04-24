@@ -1,0 +1,28 @@
+{
+  "view": "runtime",
+  "title": "Runtime Unknown Endpoint",
+  "elements": [
+    {
+      "id": "api",
+      "label": "API",
+      "type": "service"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "api-to-db",
+      "source": "api",
+      "target": "db",
+      "label": "writes",
+      "kind": "state"
+    }
+  ],
+  "primary_paths": [
+    {
+      "id": "main",
+      "main_step_ids": [
+        "api-to-db"
+      ]
+    }
+  ]
+}

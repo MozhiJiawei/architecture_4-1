@@ -1,0 +1,23 @@
+{
+  "view": "use-case-catalog",
+  "title": "Catalog Unknown Actor",
+  "actors": [
+    {
+      "id": "planner",
+      "label": "Planner"
+    }
+  ],
+  "use_cases": [
+    {
+      "id": "create-plan",
+      "code": "UC-01",
+      "label": "Create Plan",
+      "primary_actor": "operator",
+      "entry_surfaces": [
+        "Web"
+      ],
+      "priority": "P0",
+      "summary": "Create a plan."
+    }
+  ]
+}

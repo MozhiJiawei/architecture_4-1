@@ -4,20 +4,36 @@ import argparse
 from pathlib import Path
 from typing import Any
 
-from development_view_model import (
-    LabelBox,
-    Point,
-    Segment,
-    ValidationMessage,
-    ValidationReport,
-    element_port_map,
-    iter_annotation_boxes,
-    iter_edge_segments,
-    iter_element_boxes,
-    iter_group_boxes,
-    load_development_view_model,
-)
-from orthogonal_router import Box
+try:
+    from views.development.model import (
+        LabelBox,
+        Point,
+        Segment,
+        ValidationMessage,
+        ValidationReport,
+        element_port_map,
+        iter_annotation_boxes,
+        iter_edge_segments,
+        iter_element_boxes,
+        iter_group_boxes,
+        load_development_view_model,
+    )
+    from drawio_core.orthogonal_router import Box
+except ModuleNotFoundError:
+    from scripts.views.development.model import (
+        LabelBox,
+        Point,
+        Segment,
+        ValidationMessage,
+        ValidationReport,
+        element_port_map,
+        iter_annotation_boxes,
+        iter_edge_segments,
+        iter_element_boxes,
+        iter_group_boxes,
+        load_development_view_model,
+    )
+    from scripts.drawio_core.orthogonal_router import Box
 
 
 GEOMETRY_EPSILON = 1e-6

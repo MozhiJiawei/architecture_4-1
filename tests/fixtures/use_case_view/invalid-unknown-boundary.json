@@ -1,0 +1,17 @@
+{
+  "view": "use-case",
+  "title": "Use Case Unknown Boundary",
+  "system_boundary": {
+    "id": "system-boundary",
+    "label": "System"
+  },
+  "elements": [
+    {
+      "id": "create-plan",
+      "label": "Create Plan",
+      "type": "use_case",
+      "boundary": "missing-boundary"
+    }
+  ],
+  "relationships": []
+}

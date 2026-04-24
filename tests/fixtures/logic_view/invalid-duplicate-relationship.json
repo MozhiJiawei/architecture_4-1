@@ -1,0 +1,38 @@
+{
+  "view": "logic",
+  "title": "Logic Duplicate Relationship",
+  "groups": [
+    {
+      "id": "core",
+      "label": "Core"
+    }
+  ],
+  "elements": [
+    {
+      "id": "api",
+      "label": "API",
+      "type": "service",
+      "group": "core"
+    },
+    {
+      "id": "worker",
+      "label": "Worker",
+      "type": "worker",
+      "group": "core"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "api",
+      "target": "worker",
+      "label": "dispatches",
+      "kind": "async"
+    },
+    {
+      "source": "api",
+      "target": "worker",
+      "label": "dispatches",
+      "kind": "async"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "view": "runtime",
+  "title": "Runtime Duplicate Relationship",
+  "elements": [
+    {
+      "id": "api",
+      "label": "API",
+      "type": "service"
+    },
+    {
+      "id": "db",
+      "label": "DB",
+      "type": "database"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "step",
+      "source": "api",
+      "target": "db",
+      "label": "writes",
+      "kind": "state"
+    },
+    {
+      "id": "step",
+      "source": "db",
+      "target": "api",
+      "label": "returns",
+      "kind": "sync"
+    }
+  ],
+  "primary_paths": [
+    {
+      "id": "main",
+      "main_step_ids": [
+        "step"
+      ]
+    }
+  ]
+}

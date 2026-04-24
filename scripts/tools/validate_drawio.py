@@ -5,9 +5,16 @@ from html import unescape
 import re
 from collections import Counter
 from pathlib import Path
+import sys
 from xml.etree import ElementTree as ET
 
-from orthogonal_router import Box
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+try:
+    from drawio_core.orthogonal_router import Box
+except ModuleNotFoundError:
+    from scripts.drawio_core.orthogonal_router import Box
 
 
 ALLOWED_FONT_SIZES = {"12"}

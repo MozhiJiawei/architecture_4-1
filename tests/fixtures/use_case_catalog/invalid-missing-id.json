@@ -1,0 +1,17 @@
+{
+  "view": "use-case-catalog",
+  "title": "Catalog Missing Id",
+  "actors": [
+    {
+      "id": "planner",
+      "label": "Planner"
+    }
+  ],
+  "use_cases": [
+    {
+      "code": "UC-01",
+      "label": "Create Plan",
+      "primary_actor": "planner"
+    }
+  ]
+}

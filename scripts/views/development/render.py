@@ -3,8 +3,12 @@ from __future__ import annotations
 from html import escape
 from xml.etree import ElementTree as ET
 
-from development_view_model import geometry_digest, load_development_view_model
-from style_profiles import effective_subject_style, resolve_style_profile
+try:
+    from views.development.model import geometry_digest, load_development_view_model
+    from drawio_core.style_profiles import effective_subject_style, resolve_style_profile
+except ModuleNotFoundError:
+    from scripts.views.development.model import geometry_digest, load_development_view_model
+    from scripts.drawio_core.style_profiles import effective_subject_style, resolve_style_profile
 
 
 ROOT_MARGIN = 16

@@ -1,0 +1,29 @@
+{
+  "view": "runtime",
+  "title": "Runtime Unrenderable Primary Path",
+  "style_profile": "ref-default",
+  "groups": [
+    {
+      "id": "backend",
+      "label": "Backend"
+    }
+  ],
+  "elements": [
+    {
+      "id": "api",
+      "label": "API Service",
+      "type": "service",
+      "group": "backend"
+    }
+  ],
+  "relationships": [],
+  "primary_paths": [
+    {
+      "id": "broken-path",
+      "label": "Broken Path",
+      "main_step_ids": [
+        "missing-step"
+      ]
+    }
+  ]
+}

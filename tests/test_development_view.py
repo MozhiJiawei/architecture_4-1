@@ -10,8 +10,8 @@ if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
 from render_drawio import render_view_model
-from validate_development_view import validate_development_view
-from validate_drawio import validate_file
+from views.development.validate import validate_development_view
+from tools.validate_drawio import validate_file
 
 
 FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures" / "development_view"

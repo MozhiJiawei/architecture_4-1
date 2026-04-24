@@ -1,0 +1,27 @@
+{
+  "view": "logic",
+  "title": "Logic Unknown Endpoint",
+  "groups": [
+    {
+      "id": "core",
+      "label": "Core"
+    }
+  ],
+  "elements": [
+    {
+      "id": "api",
+      "label": "API",
+      "type": "service",
+      "group": "core"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "api-to-db",
+      "source": "api",
+      "target": "db",
+      "label": "reads",
+      "kind": "sync"
+    }
+  ]
+}

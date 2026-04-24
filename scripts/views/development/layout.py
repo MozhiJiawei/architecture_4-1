@@ -8,7 +8,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
-from validate_development_view import validate_development_view
+try:
+    from views.development.validate import validate_development_view
+except ModuleNotFoundError:
+    from scripts.views.development.validate import validate_development_view
 
 
 NODE_WIDTH = 340

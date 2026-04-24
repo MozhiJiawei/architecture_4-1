@@ -33,18 +33,18 @@ def main() -> int:
         target.parent / "exports" if target.is_file() else target / "exports"
     )
 
-    repo_root = Path(__file__).resolve().parents[1]
+    tools_root = Path(__file__).resolve().parent
     python = sys.executable
 
-    run_step([python, str(repo_root / "scripts" / "validate_drawio.py"), str(target)])
+    run_step([python, str(tools_root / "validate_drawio.py"), str(target)])
     run_step([
         python,
-        str(repo_root / "scripts" / "export_diagrams.py"),
+        str(tools_root / "export_diagrams.py"),
         str(target),
         "--output-dir",
         str(exports_dir),
     ])
-    run_step([python, str(repo_root / "scripts" / "inspect_exports.py"), str(exports_dir)])
+    run_step([python, str(tools_root / "inspect_exports.py"), str(exports_dir)])
     print(f"Visual validation pipeline passed. Exports: {exports_dir}")
     return 0
 

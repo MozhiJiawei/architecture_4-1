@@ -13,13 +13,13 @@ if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
 from render_drawio import render_view_model
-from solve_development_view_layout import solve_development_view_layout
-from validate_development_view import validate_development_view
-from validate_drawio import validate_file
+from views.development.layout import solve_development_view_layout
+from views.development.validate import validate_development_view
+from tools.validate_drawio import validate_file
 
 
-DGM_DEVELOPMENT_MODEL = REPO_ROOT / "tmp-artifacts" / "dgm-main" / "development" / "development-view.json"
 FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures" / "development_view"
+SOLVER_REFERENCE_MODEL = FIXTURE_DIR / "valid-balanced.json"
 
 
 def load_json(path: Path) -> dict:
@@ -50,7 +50,7 @@ def strip_layout(model: dict) -> dict:
 
 
 def test_solver_completes_dgm_development_geometry_with_numbered_line_descriptions() -> None:
-    solved = solve_development_view_layout(load_json(DGM_DEVELOPMENT_MODEL))
+    solved = solve_development_view_layout(load_json(SOLVER_REFERENCE_MODEL))
 
     report = validate_development_view(solved)
     assert not report.errors
@@ -72,7 +72,7 @@ def test_solver_handles_generic_unlaid_development_fixture() -> None:
 
 
 def test_solver_output_renders_without_drawio_errors(tmp_path: Path) -> None:
-    solved = solve_development_view_layout(load_json(DGM_DEVELOPMENT_MODEL))
+    solved = solve_development_view_layout(load_json(SOLVER_REFERENCE_MODEL))
     solved_path = tmp_path / "development-view-solved.json"
     solved_path.write_text(json.dumps(solved, ensure_ascii=False), encoding="utf-8")
 

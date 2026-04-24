@@ -1,0 +1,19 @@
+{
+  "view": "use-case",
+  "title": "Use Case Unknown Group",
+  "groups": [
+    {
+      "id": "planner",
+      "label": "Planner"
+    }
+  ],
+  "elements": [
+    {
+      "id": "create-plan",
+      "label": "Create Plan",
+      "type": "use_case",
+      "group": "missing"
+    }
+  ],
+  "relationships": []
+}

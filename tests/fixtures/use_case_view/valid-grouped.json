@@ -1,0 +1,74 @@
+{
+  "view": "use-case",
+  "title": "Use Case View Fixture",
+  "summary": "Grouped use-case model used to protect actor-panel rendering.",
+  "style_profile": "ref-default",
+  "system_boundary": {
+    "id": "system-boundary",
+    "label": "Planning System"
+  },
+  "groups": [
+    {
+      "id": "planner",
+      "label": "Planner",
+      "layout_hint": {
+        "order": 1
+      }
+    },
+    {
+      "id": "operator",
+      "label": "Operator",
+      "layout_hint": {
+        "order": 2
+      }
+    }
+  ],
+  "elements": [
+    {
+      "id": "actor-planner",
+      "label": "Planner",
+      "type": "actor",
+      "group": "planner"
+    },
+    {
+      "id": "actor-operator",
+      "label": "Operator",
+      "type": "actor",
+      "group": "operator"
+    },
+    {
+      "id": "create-plan",
+      "label": "Create Plan",
+      "type": "use_case",
+      "group": "planner",
+      "boundary": "system-boundary",
+      "priority": "P0"
+    },
+    {
+      "id": "approve-plan",
+      "label": "Approve Plan",
+      "type": "use_case",
+      "group": "operator",
+      "boundary": "system-boundary",
+      "priority": "P1"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "create-includes-approve",
+      "source": "create-plan",
+      "target": "approve-plan",
+      "kind": "include",
+      "render": true
+    }
+  ],
+  "associations": [
+    {
+      "id": "planner-create",
+      "source": "actor-planner",
+      "target": "create-plan",
+      "kind": "association",
+      "render": false
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "view": "runtime",
+  "title": "Runtime Empty Path",
+  "elements": [
+    {
+      "id": "api",
+      "label": "API",
+      "type": "service"
+    }
+  ],
+  "relationships": [],
+  "primary_paths": [
+    {
+      "id": "empty",
+      "label": "Empty"
+    }
+  ]
+}

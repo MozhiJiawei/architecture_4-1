@@ -1,0 +1,41 @@
+{
+  "view": "use-case-catalog",
+  "title": "Planning Use Case Catalog",
+  "derived_view_title": "Planning Use Case View",
+  "system_name": "Planning System",
+  "style_profile": "ref-default",
+  "actors": [
+    {
+      "id": "planner",
+      "label": "Planner"
+    },
+    {
+      "id": "operator",
+      "label": "Operator"
+    }
+  ],
+  "use_cases": [
+    {
+      "id": "create-plan",
+      "code": "UC-01",
+      "label": "Create Plan",
+      "primary_actor": "planner",
+      "entry_surfaces": [
+        "Web Console"
+      ],
+      "priority": "P0",
+      "summary": "Planner creates a new delivery plan."
+    },
+    {
+      "id": "approve-plan",
+      "code": "UC-02",
+      "label": "Approve Plan",
+      "primary_actor": "operator",
+      "entry_surfaces": [
+        "Operations Console"
+      ],
+      "priority": "P1",
+      "summary": "Operator approves a prepared plan."
+    }
+  ]
+}

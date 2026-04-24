@@ -1,0 +1,86 @@
+{
+  "view": "runtime",
+  "title": "Runtime View Fixture",
+  "summary": "Small runtime path used to protect sequence-style rendering.",
+  "style_profile": "ref-default",
+  "groups": [
+    {
+      "id": "client",
+      "label": "Client",
+      "layout_hint": {
+        "order": 1
+      }
+    },
+    {
+      "id": "backend",
+      "label": "Backend",
+      "layout_hint": {
+        "order": 2
+      }
+    },
+    {
+      "id": "storage",
+      "label": "Storage",
+      "layout_hint": {
+        "order": 3
+      }
+    }
+  ],
+  "elements": [
+    {
+      "id": "browser",
+      "label": "Browser",
+      "type": "interface",
+      "group": "client",
+      "color_role": "blue"
+    },
+    {
+      "id": "api",
+      "label": "API Service",
+      "type": "service",
+      "group": "backend",
+      "color_role": "green"
+    },
+    {
+      "id": "db",
+      "label": "Database",
+      "type": "database",
+      "group": "storage",
+      "color_role": "yellow"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "submit-request",
+      "source": "browser",
+      "target": "api",
+      "label": "submit request",
+      "kind": "sync"
+    },
+    {
+      "id": "write-record",
+      "source": "api",
+      "target": "db",
+      "label": "write record",
+      "kind": "state"
+    },
+    {
+      "id": "return-result",
+      "source": "api",
+      "target": "browser",
+      "label": "return result",
+      "kind": "sync"
+    }
+  ],
+  "primary_paths": [
+    {
+      "id": "happy-path",
+      "label": "Happy Path",
+      "main_step_ids": [
+        "submit-request",
+        "write-record",
+        "return-result"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "view": "use-case-catalog",
+  "title": "Catalog Invalid Entry Surfaces",
+  "actors": [
+    {
+      "id": "planner",
+      "label": "Planner"
+    }
+  ],
+  "use_cases": [
+    {
+      "id": "create-plan",
+      "code": "UC-01",
+      "label": "Create Plan",
+      "primary_actor": "planner",
+      "entry_surfaces": "Web",
+      "priority": "P0"
+    }
+  ]
+}

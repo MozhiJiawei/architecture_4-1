@@ -1,0 +1,24 @@
+{
+  "view": "use-case-catalog",
+  "title": "Catalog Duplicate Id Code",
+  "actors": [
+    {
+      "id": "planner",
+      "label": "Planner"
+    }
+  ],
+  "use_cases": [
+    {
+      "id": "create-plan",
+      "code": "UC-01",
+      "label": "Create Plan",
+      "primary_actor": "planner"
+    },
+    {
+      "id": "create-plan",
+      "code": "UC-01",
+      "label": "Create Plan Again",
+      "primary_actor": "planner"
+    }
+  ]
+}

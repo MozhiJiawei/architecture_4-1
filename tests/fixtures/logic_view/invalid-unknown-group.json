@@ -1,0 +1,19 @@
+{
+  "view": "logic",
+  "title": "Logic Unknown Group",
+  "groups": [
+    {
+      "id": "known",
+      "label": "Known"
+    }
+  ],
+  "elements": [
+    {
+      "id": "api",
+      "label": "API",
+      "type": "service",
+      "group": "missing"
+    }
+  ],
+  "relationships": []
+}

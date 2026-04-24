@@ -6,7 +6,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
 
-from orthogonal_router import Box
+try:
+    from drawio_core.orthogonal_router import Box
+except ModuleNotFoundError:
+    from scripts.drawio_core.orthogonal_router import Box
 
 
 @dataclass(frozen=True)

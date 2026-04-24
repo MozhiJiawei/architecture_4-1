@@ -1,0 +1,17 @@
+{
+  "view": "use-case",
+  "title": "Use Case Duplicate Element",
+  "elements": [
+    {
+      "id": "create-plan",
+      "label": "Create Plan",
+      "type": "use_case"
+    },
+    {
+      "id": "create-plan",
+      "label": "Create Plan Copy",
+      "type": "use_case"
+    }
+  ],
+  "relationships": []
+}

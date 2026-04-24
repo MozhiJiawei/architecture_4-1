@@ -1,0 +1,25 @@
+{
+  "view": "logic",
+  "title": "Logic Duplicate Element",
+  "groups": [
+    {
+      "id": "core",
+      "label": "Core"
+    }
+  ],
+  "elements": [
+    {
+      "id": "api",
+      "label": "API",
+      "type": "service",
+      "group": "core"
+    },
+    {
+      "id": "api",
+      "label": "API Copy",
+      "type": "service",
+      "group": "core"
+    }
+  ],
+  "relationships": []
+}
