@@ -206,16 +206,17 @@ Read these first when needed:
 - [references/use-case-view-patterns.md](references/use-case-view-patterns.md): use-case-specific modeling strategy
 
 Use these scripts in the main-agent completion phase:
-- `scripts/render_drawio.py`: render `.drawio` from the intermediate model
-- `scripts/validate_drawio.py`: structural and style validation
-- `scripts/export_diagrams.py`: export previews from `.drawio`
-- `scripts/inspect_exports.py`: inspect exported previews for obvious failures
-- `scripts/validate_visual_pipeline.py`: run the validation/export/inspection pipeline in order
+- `scripts/render_drawio.py`: run the unified view pipeline for an intermediate model (`solve layout -> model validation -> render .drawio -> draw.io XML validation`)
+- `scripts/tools/validate_visual_pipeline.py`: run draw.io validation, export, and inspection in order
+
+Treat these scripts as command interfaces, not as modeling authority. Do not
+depend on renderer internals or import private modules from prompts; use the
+intermediate JSON contract and the documented commands above.
 
 For normal view generation, split the workflow into two stages:
 1. subagent stage: produce the intermediate JSON and evidence note
 2. main-agent stage: render every required intermediate JSON artifact, including `use-case-view.json` when the requested view is use-case, by running `python scripts/render_drawio.py <json-path> --output-dir <view-dir> --export-previews --preview-dir <view-dir>\\exports --preview-format png`
-3. main-agent stage: run `python scripts/validate_visual_pipeline.py <drawio-path> --exports-dir <view-dir>\\exports` for each rendered `.drawio`, including the table artifact for use-case work
+3. main-agent stage: run `python scripts/tools/validate_visual_pipeline.py <drawio-path> --exports-dir <view-dir>\\exports` for each rendered `.drawio`, including the table artifact for use-case work
 4. if rendering or validation fails, save the failing command, stderr summary, and current artifact list into `<view-dir>\\render-validation-failure.md` before replying
 
 Do not ask a subagent to render, export, or validate unless the user explicitly overrides this workflow.
