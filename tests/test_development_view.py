@@ -22,6 +22,10 @@ def rule_ids(messages) -> set[str]:
     return {message.rule_id for message in messages}
 
 
+def without_soft_breaks(value: str) -> str:
+    return value.replace("&amp;#8203;", "").replace("&#8203;", "").replace("\u200b", "")
+
+
 def test_valid_balanced_fixture_passes_structure_validation() -> None:
     report = validate_development_view(FIXTURE_DIR / "valid-balanced.json")
     assert not report.errors
@@ -43,9 +47,14 @@ def test_edge_edge_intersection_fixture_reports_intersection() -> None:
     assert "edge-edge-intersection" in rule_ids(report.errors)
 
 
-def test_label_overlap_fixture_reports_overlap() -> None:
+def test_edge_label_overlap_fixture_is_allowed() -> None:
     report = validate_development_view(FIXTURE_DIR / "invalid-label-overlap.json")
-    assert "label-label-overlap" in rule_ids(report.errors)
+    assert "label-label-overlap" not in rule_ids(report.errors)
+
+
+def test_annotation_overlap_fixture_reports_overlap() -> None:
+    report = validate_development_view(FIXTURE_DIR / "invalid-annotation-overlap.json")
+    assert "annotation-annotation-overlap" in rule_ids(report.errors)
 
 
 def test_missing_content_fixture_reports_missing_fields() -> None:
@@ -68,7 +77,7 @@ def test_valid_balanced_fixture_renders_and_passes_drawio_validation() -> None:
     warnings, errors = validate_file(output_path)
     assert not errors
 
-    xml = output_path.read_text(encoding="utf-8")
+    xml = without_soft_breaks(output_path.read_text(encoding="utf-8"))
     assert "Coordinates multi-generation development-view export runs" in xml
     assert "+ choose_selfimproves()" in xml
     assert "+ export_with_real_drawio()" in xml

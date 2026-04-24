@@ -11,10 +11,10 @@ from development_view_model import (
     ValidationMessage,
     ValidationReport,
     element_port_map,
+    iter_annotation_boxes,
     iter_edge_segments,
     iter_element_boxes,
     iter_group_boxes,
-    iter_label_boxes,
     load_development_view_model,
 )
 from orthogonal_router import Box
@@ -195,7 +195,7 @@ def validate_development_view(path_or_model: Path | str | dict[str, Any]) -> Val
             report.add_error("missing-exposes", f"Element {element_id} must expose at least one interface line.", element_id)
 
     port_map = element_port_map(model)
-    label_boxes = list(iter_label_boxes(model))
+    annotation_boxes = list(iter_annotation_boxes(model))
     relationship_segments = list(iter_edge_segments(model))
 
     signature_counts: dict[tuple[str, str, str, str], list[str]] = {}
@@ -325,26 +325,23 @@ def validate_development_view(path_or_model: Path | str | dict[str, Any]) -> Val
                     other_edge_id,
                 )
 
-    for relationship, label_box in label_boxes:
-        relationship_id = str(relationship.get("id") or "")
-        label_tuple = box_to_tuple(label_box)
+    for annotation_id, annotation_box in annotation_boxes:
+        annotation_tuple = box_to_tuple(annotation_box)
         for element_id, element_box in element_boxes.items():
-            if box_overlap_area(label_tuple, box_to_tuple(element_box)) > GEOMETRY_EPSILON:
+            if box_overlap_area(annotation_tuple, box_to_tuple(element_box)) > GEOMETRY_EPSILON:
                 report.add_error(
-                    "label-node-overlap",
-                    f"Label for relationship {relationship_id} overlaps element {element_id}.",
-                    relationship_id,
+                    "annotation-node-overlap",
+                    f"Annotation {annotation_id} overlaps element {element_id}.",
+                    annotation_id,
                     element_id,
                 )
 
-    for index, (relationship, first_box) in enumerate(label_boxes):
-        first_id = str(relationship.get("id") or "")
-        for other_relationship, second_box in label_boxes[index + 1 :]:
-            second_id = str(other_relationship.get("id") or "")
+    for index, (first_id, first_box) in enumerate(annotation_boxes):
+        for second_id, second_box in annotation_boxes[index + 1 :]:
             if box_overlap_area(box_to_tuple(first_box), box_to_tuple(second_box)) > GEOMETRY_EPSILON:
                 report.add_error(
-                    "label-label-overlap",
-                    f"Relationship labels {first_id} and {second_id} overlap.",
+                    "annotation-annotation-overlap",
+                    f"Annotations {first_id} and {second_id} overlap.",
                     first_id,
                     second_id,
                 )

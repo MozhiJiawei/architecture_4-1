@@ -10,6 +10,8 @@ from style_profiles import effective_subject_style, resolve_style_profile
 ROOT_MARGIN = 16
 LEGEND_DEFAULT_WIDTH = 240
 LEGEND_DEFAULT_HEIGHT = 132
+RELATIONSHIP_LEGEND_DEFAULT_WIDTH = 360
+RELATIONSHIP_LEGEND_DEFAULT_HEIGHT = 420
 SECTION_STROKE = "#6b7280"
 
 
@@ -27,13 +29,21 @@ def sanitize_id(value: str) -> str:
 
 
 def html_multiline(value: str) -> str:
-    lines = [escape(line.strip()) for line in str(value or "").splitlines() if line.strip()]
+    lines = [soft_wrap_text(line.strip()) for line in str(value or "").splitlines() if line.strip()]
     return "<br/>".join(lines) if lines else "&nbsp;"
 
 
 def html_list(items: list[str], prefix: str = "") -> str:
-    lines = [escape(f"{prefix}{item.strip()}") for item in items if item.strip()]
+    lines = [soft_wrap_text(f"{prefix}{item.strip()}") for item in items if item.strip()]
     return "<br/>".join(lines) if lines else "&nbsp;"
+
+
+def soft_wrap_text(value: str) -> str:
+    escaped = escape(str(value or ""))
+    # Draw.io HTML labels do not reliably wrap long code-ish tokens such as
+    # MODEL_EXPRESS_CACHE_PATH. Add explicit soft-break opportunities at common
+    # code separators so table labels stay inside their cards.
+    return "".join(f"{char}&#8203;" if char in "_/.-:" else char for char in escaped)
 
 
 def lighten_hex(color: str, ratio: float) -> str:
@@ -64,37 +74,78 @@ def node_value(element: dict[str, object], node_style: dict[str, str]) -> str:
         prefix="+ ",
     )
     return (
-        "<table style='width:100%;height:100%;border-collapse:collapse;'>"
+        "<table style='width:100%;height:100%;border-collapse:collapse;table-layout:fixed;'>"
         f"<tr><td style='background:{title_fill};color:{title_color};"
         f"border-bottom:1px solid {stroke};font-size:13px;font-weight:700;"
-        "text-align:center;padding:8px 10px;'>"
+        "text-align:center;padding:8px 10px;overflow-wrap:anywhere;word-break:break-word;'>"
         f"{label}</td></tr>"
         f"<tr><td style='background:{section_fill};border-bottom:1px solid {stroke};padding:8px 10px;"
-        "font-size:11px;line-height:1.35;text-align:left;vertical-align:top;'>"
+        "font-size:11px;line-height:1.35;text-align:left;vertical-align:top;overflow-wrap:anywhere;word-break:break-word;'>"
         "<div style='font-weight:700;margin-bottom:4px;'>简述</div>"
-        f"<div>{responsibility}</div></td></tr>"
+        f"<div style='overflow-wrap:anywhere;word-break:break-word;'>{responsibility}</div></td></tr>"
         f"<tr><td style='background:{section_fill};padding:8px 10px;font-size:11px;line-height:1.35;"
-        "text-align:left;vertical-align:top;'>"
+        "text-align:left;vertical-align:top;overflow-wrap:anywhere;word-break:break-word;'>"
         "<div style='font-weight:700;margin-bottom:4px;'>接口</div>"
-        f"<div>{exposes}</div></td></tr>"
+        f"<div style='overflow-wrap:anywhere;word-break:break-word;'>{exposes}</div></td></tr>"
         "</table>"
     )
 
 
-def legend_value(model: dict[str, object]) -> str:
+def legend_value(model: dict[str, object], profile: dict[str, object]) -> str:
     legend = model.get("legend")
     if not isinstance(legend, dict):
         return "Legend"
-    lines = [str(legend.get("title") or "Legend").strip() or "Legend"]
+    title = escape(str(legend.get("title") or "Legend").strip() or "Legend")
+    rows = [f"<tr><td colspan='2' style='font-weight:700;padding:2px 0 8px 0;'>{title}</td></tr>"]
     for item in legend.get("items") or []:
         if not isinstance(item, dict):
             continue
         label = str(item.get("label") or "").strip()
         role = str(item.get("color_role") or "").strip()
         if label and role:
-            lines.append(f"{label}: {role}")
-    lines.append(f"geometry_hash={geometry_digest(model)}")
-    return "&#10;".join(lines)
+            style = effective_subject_style(profile, "node", {"color_role": role})
+            fill = style.get("fillColor", "#ffffff")
+            stroke = style.get("strokeColor", "#6b7280")
+            rows.append(
+                "<tr>"
+                f"<td style='width:30px;padding:5px 8px 5px 0;'><span style='display:inline-block;width:20px;height:14px;background:{fill};border:1px solid {stroke};'></span></td>"
+                f"<td style='padding:4px 0;'>{escape(label)}</td>"
+                "</tr>"
+            )
+    return "<table style='width:100%;border-collapse:collapse;font-size:12px;line-height:1.3;'>" + "".join(rows) + "</table>"
+
+
+def relationship_legend_value(model: dict[str, object]) -> str:
+    legend = model.get("relationship_legend")
+    title = "关系说明"
+    items: list[dict[str, object]] = []
+    if isinstance(legend, dict):
+        title = str(legend.get("title") or title).strip() or title
+        raw_items = legend.get("items")
+        if isinstance(raw_items, list):
+            items = [item for item in raw_items if isinstance(item, dict)]
+    if not items:
+        for relationship in model.get("relationships") or []:
+            if not isinstance(relationship, dict):
+                continue
+            code = str(relationship.get("code") or relationship.get("line_label") or "").strip()
+            label = str(relationship.get("label") or "").strip()
+            source = str(relationship.get("source") or "").strip()
+            target = str(relationship.get("target") or "").strip()
+            if code and label:
+                items.append({"code": code, "label": f"{source} -> {target}: {label}".strip(": ")})
+    rows = [f"<tr><td colspan='2' style='font-weight:700;padding:2px 0 8px 0;'>{escape(title)}</td></tr>"]
+    for item in items:
+        code = str(item.get("code") or "").strip()
+        label = str(item.get("label") or "").strip()
+        if code and label:
+            rows.append(
+                "<tr>"
+                f"<td style='width:36px;font-weight:700;vertical-align:top;padding:3px 8px 3px 0;'>{escape(code)}</td>"
+                f"<td style='vertical-align:top;padding:3px 0;'>{escape(label)}</td>"
+                "</tr>"
+            )
+    return "<table style='width:100%;border-collapse:collapse;font-size:12px;line-height:1.25;'>" + "".join(rows) + "</table>"
 
 
 def build_development_diagram_xml(view_model: dict[str, object]) -> str:
@@ -242,8 +293,12 @@ def build_development_diagram_xml(view_model: dict[str, object]) -> str:
                     ET.SubElement(array, "mxPoint", x=str(end.get("x")), y=str(end.get("y")))
 
         label_box = relationship.get("label_box")
-        label = str(relationship.get("label") or "").strip()
-        if label and isinstance(label_box, dict):
+        label = str(relationship.get("code") or relationship.get("line_label") or relationship.get("label") or "").strip()
+        if label:
+            label_geometry = {"x": 0, "y": 0, "width": 32, "height": 18}
+            if isinstance(label_box, dict):
+                label_geometry["width"] = int(float(label_box.get("width") or 32))
+                label_geometry["height"] = int(float(label_box.get("height") or 18))
             label_cell = ET.SubElement(
                 xml_root,
                 "mxCell",
@@ -251,19 +306,21 @@ def build_development_diagram_xml(view_model: dict[str, object]) -> str:
                 value=label.replace("\n", "&#10;"),
                 style=(
                     "text;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;"
-                    "fontSize=12;fillColor=none;"
+                    "fontSize=12;fontStyle=1;fillColor=none;strokeColor=none;"
                     f"{style_pairs(edge_style, ('fontColor', 'strokeColor'))}"
                 ),
                 vertex="1",
-                parent="group-development-root",
+                connectable="0",
+                parent=relationship_id,
             )
             ET.SubElement(
                 label_cell,
                 "mxGeometry",
-                x=str(int(float(label_box["x"]))),
-                y=str(int(float(label_box["y"]))),
-                width=str(int(float(label_box["width"]))),
-                height=str(int(float(label_box["height"]))),
+                x="0",
+                y="0",
+                width=str(label_geometry["width"]),
+                height=str(label_geometry["height"]),
+                relative="1",
                 attrib={"as": "geometry"},
             )
 
@@ -281,9 +338,9 @@ def build_development_diagram_xml(view_model: dict[str, object]) -> str:
         xml_root,
         "mxCell",
         id="development-legend",
-        value=legend_value(model),
+        value=legend_value(model, profile),
         style=(
-            "rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fontSize=12;"
+            "rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=10;fontSize=12;"
             f"{style_pairs(legend_style, ('fillColor', 'strokeColor', 'fontColor'))}"
         ),
         vertex="1",
@@ -298,6 +355,38 @@ def build_development_diagram_xml(view_model: dict[str, object]) -> str:
         height=str(int(float(legend_frame["height"]))),
         attrib={"as": "geometry"},
     )
+
+    relationship_legend = model.get("relationship_legend")
+    relationship_legend_frame = relationship_legend.get("frame") if isinstance(relationship_legend, dict) else None
+    if isinstance(relationship_legend, dict):
+        if not isinstance(relationship_legend_frame, dict):
+            relationship_legend_frame = {
+                "x": float(canvas.get("width") or 1600) - RELATIONSHIP_LEGEND_DEFAULT_WIDTH - 24,
+                "y": float(legend_frame["y"]) + float(legend_frame["height"]) + 16,
+                "width": RELATIONSHIP_LEGEND_DEFAULT_WIDTH,
+                "height": RELATIONSHIP_LEGEND_DEFAULT_HEIGHT,
+            }
+        relationship_cell = ET.SubElement(
+            xml_root,
+            "mxCell",
+            id="development-relationship-legend",
+            value=relationship_legend_value(model),
+            style=(
+                "rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=10;fontSize=12;"
+                f"{style_pairs(legend_style, ('fillColor', 'strokeColor', 'fontColor'))}"
+            ),
+            vertex="1",
+            parent="group-development-root",
+        )
+        ET.SubElement(
+            relationship_cell,
+            "mxGeometry",
+            x=str(int(float(relationship_legend_frame["x"]))),
+            y=str(int(float(relationship_legend_frame["y"]))),
+            width=str(int(float(relationship_legend_frame["width"]))),
+            height=str(int(float(relationship_legend_frame["height"]))),
+            attrib={"as": "geometry"},
+        )
 
     hidden_hash = ET.SubElement(
         xml_root,

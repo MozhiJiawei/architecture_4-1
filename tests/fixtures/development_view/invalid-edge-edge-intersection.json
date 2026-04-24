@@ -6,7 +6,7 @@
   "canvas": {"width": 1200, "height": 700},
   "legend": {
     "title": "Legend",
-    "frame": {"x": 940, "y": 32, "width": 220, "height": 120},
+    "frame": {"x": 1000, "y": 32, "width": 160, "height": 80},
     "items": [
       {"label": "Orchestration", "color_role": "blue"},
       {"label": "Workflow", "color_role": "green"}

@@ -160,6 +160,17 @@ def iter_label_boxes(model: dict[str, Any]) -> Iterable[tuple[dict[str, Any], La
         )
 
 
+def iter_annotation_boxes(model: dict[str, Any]) -> Iterable[tuple[str, Box]]:
+    for key, box_id in (
+        ("legend", "development-legend"),
+        ("relationship_legend", "development-relationship-legend"),
+    ):
+        raw = model.get(key)
+        frame = raw.get("frame") if isinstance(raw, dict) else None
+        if isinstance(frame, dict):
+            yield box_id, frame_to_box(frame, box_id=box_id, kind="annotation")
+
+
 def element_port_map(model: dict[str, Any]) -> dict[str, dict[str, Point]]:
     result: dict[str, dict[str, Point]] = {}
     for element in model.get("elements") or []:
@@ -202,11 +213,13 @@ def geometry_digest(model: dict[str, Any]) -> str:
                 "id": relationship.get("id"),
                 "segments": relationship.get("segments"),
                 "label_box": relationship.get("label_box"),
+                "code": relationship.get("code"),
             }
             for relationship in (model.get("relationships") or [])
             if isinstance(relationship, dict)
         ],
         "legend": model.get("legend"),
+        "relationship_legend": model.get("relationship_legend"),
     }
     payload = json.dumps(relevant, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha1(payload.encode("utf-8")).hexdigest()[:16]

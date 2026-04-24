@@ -31,8 +31,8 @@ def assert_contains(messages: list[str], needle: str) -> None:
         ("xml-invalid-colors.json", ["invalid fillColor", "invalid strokeColor", "invalid fontColor"], []),
         ("xml-long-labels.json", [], ["group label on group-development-root is long", "group label on group-development-root has too many lines", "node label on node-a is long", "node label on node-a has too many lines", "node label on node-b has too many lines", "node label on edge-label-rel-a-b is long", "node label on edge-label-rel-a-b ends like prose"]),
         ("xml-semantic-budget.json", [], ["semantic fill palette uses", "semantic stroke palette uses"]),
-        ("invalid-label-node-overlap.json", ["label edge-label-rel-a-b overlaps node node-b"], []),
-        ("invalid-label-overlap.json", ["labels edge-label-rel-outer-to-self and edge-label-rel-self-to-agent overlap"], []),
+        ("invalid-label-node-overlap.json", [], []),
+        ("invalid-label-overlap.json", [], []),
     ],
 )
 def test_rendered_fixture_xml_validator_matrix(

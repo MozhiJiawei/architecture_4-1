@@ -18,6 +18,7 @@ MAX_EDGE_LABEL_CHARS = 44
 MAX_NODE_LINES = 3
 MAX_GROUP_LINES = 2
 MAX_EDGE_LINES = 2
+MAX_UNBROKEN_TOKEN_PER_100PX = 14
 GEOMETRY_EPSILON = 1e-6
 HEX_COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{6}$")
 NON_BUDGET_FILL_COLORS = {"#f8f9fa", "#ffffff", "none"}
@@ -87,6 +88,23 @@ def count_lines(value: str) -> int:
 def plain_length(value: str) -> int:
     text = normalize_value(value)
     return len(text.replace("\n", " ").strip())
+
+
+def longest_unbroken_token_length(value: str) -> int:
+    text = normalize_value(value)
+    text = text.replace("\u200b", " ")
+    tokens = re.split(r"\s+", text)
+    return max((len(token) for token in tokens if token), default=0)
+
+
+def cell_geometry_size(cell: ET.Element) -> tuple[float, float] | None:
+    geometry = cell.find("./mxGeometry")
+    if geometry is None:
+        return None
+    try:
+        return float(geometry.attrib.get("width", "0")), float(geometry.attrib.get("height", "0"))
+    except ValueError:
+        return None
 
 
 def point_from_relative(box: tuple[float, float, float, float], rx: float, ry: float) -> tuple[float, float]:
@@ -347,6 +365,18 @@ def validate_file(xml_path: Path) -> tuple[list[str], list[str]]:
                 warnings.append(f"{xml_path}: node label on {cell_id} is long ({label_length} chars)")
             if line_count > MAX_NODE_LINES:
                 warnings.append(f"{xml_path}: node label on {cell_id} has too many lines ({line_count})")
+            size = cell_geometry_size(cell)
+            is_metadata_cell = str(cell_id or "").startswith("development-geometry-hash")
+            if size and not is_metadata_cell:
+                width, _ = size
+                longest_token = longest_unbroken_token_length(value)
+                max_token = max(12, int((width / 100.0) * MAX_UNBROKEN_TOKEN_PER_100PX))
+                if longest_token > max_token:
+                    errors.append(
+                        f"{xml_path}: node label on {cell_id} has an unbroken token "
+                        f"of {longest_token} chars, exceeding width budget {max_token}; "
+                        "insert soft breaks or widen the node"
+                    )
             normalized = normalize_value(value)
             if normalized.endswith("."):
                 warnings.append(f"{xml_path}: node label on {cell_id} ends like prose; prefer terse noun phrases")
@@ -417,8 +447,7 @@ def validate_file(xml_path: Path) -> tuple[list[str], list[str]]:
             group_headers[cell_id] = header_height
             header_obstacles.append(Box(id=cell_id, x=x, y=y, width=width, height=header_height, kind="group-header"))
         elif is_text_cell(cell):
-            if cell_id.startswith("edge-label-"):
-                label_obstacles.append(Box(id=cell_id, x=x, y=y, width=width, height=height, kind="edge-label"))
+            pass
         else:
             node_obstacles.append(Box(id=cell_id, x=x, y=y, width=width, height=height, kind="node"))
 
