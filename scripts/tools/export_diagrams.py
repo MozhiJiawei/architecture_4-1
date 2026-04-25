@@ -19,6 +19,8 @@ from playwright.async_api import ConsoleMessage, async_playwright
 
 DRAWIO_EXTENSION_ROOT = Path.home() / ".vscode" / "extensions" / "hediet.vscode-drawio-1.9.0"
 DRAWIO_WEBAPP_ROOT = DRAWIO_EXTENSION_ROOT / "drawio" / "src" / "main" / "webapp"
+DRAWIO_WEBAPP_INDEX = DRAWIO_WEBAPP_ROOT / "index.html"
+DRAWIO_REMOTE_EMBED_URL = "https://embed.diagrams.net/"
 HARNESS_TEMPLATE = Path(__file__).with_name("drawio_export_harness.html")
 BACKGROUND = (255, 255, 255, 255)
 
@@ -32,7 +34,7 @@ def iter_targets(target: Path) -> list[Path]:
 
 
 def ensure_drawio_runtime() -> None:
-    if not DRAWIO_WEBAPP_ROOT.exists():
+    if not DRAWIO_WEBAPP_ROOT.exists() and not DRAWIO_REMOTE_EMBED_URL:
         raise FileNotFoundError(
             "Bundled draw.io webapp not found at "
             f"{DRAWIO_WEBAPP_ROOT}. Install the VS Code draw.io extension first."
@@ -44,6 +46,12 @@ def ensure_drawio_runtime() -> None:
 def build_harness_html(base_href: str) -> str:
     template = HARNESS_TEMPLATE.read_text(encoding="utf-8")
     return template.replace("__BASE_HREF__", base_href)
+
+
+def drawio_base_href(host: str, port: int) -> str:
+    if DRAWIO_WEBAPP_INDEX.exists():
+        return f"http://{host}:{port}/index.html"
+    return DRAWIO_REMOTE_EMBED_URL
 
 
 def default_drawio_config() -> dict[str, Any]:
@@ -92,7 +100,10 @@ class DrawioHarness:
         waiter = (event_name, future)
         self.pending_waiters.append(waiter)
         try:
-            return await asyncio.wait_for(future, timeout=timeout_ms / 1000)
+            result = await asyncio.wait_for(future, timeout=timeout_ms / 1000)
+            if result in self.events:
+                self.events.remove(result)
+            return result
         finally:
             if waiter in self.pending_waiters:
                 self.pending_waiters.remove(waiter)
@@ -126,7 +137,7 @@ def start_drawio_server():
 
         harness_path = temp_root / "harness.html"
         harness_path.write_text(
-            build_harness_html(f"http://{host}:{port}/index.html"),
+            build_harness_html(drawio_base_href(host, port)),
             encoding="utf-8",
         )
 

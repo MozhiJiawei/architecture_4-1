@@ -17,4 +17,4 @@ jobs:
           python-version: "3.11"
 
       - name: Run English-only check
-        run: python scripts/check_english_only.py
+        run: python scripts/tools/check_english_only.py

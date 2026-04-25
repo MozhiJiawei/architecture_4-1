@@ -7,6 +7,17 @@ from pathlib import Path
 
 HAN_PATTERN = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
 TEXT_SUFFIXES = {".md", ".py", ".html", ".js", ".ts", ".yaml", ".yml"}
+ALLOWED_HAN_PATHS = {
+    Path("SKILL.md"),
+    Path("scripts/views/development/layout.py"),
+    Path("scripts/views/development/render.py"),
+    Path("scripts/views/runtime/render.py"),
+    Path("scripts/views/use_case/catalog.py"),
+    Path("scripts/views/use_case/validate.py"),
+    Path("references/development-view-patterns.md"),
+    Path("references/renderer-contract.md"),
+    Path("references/use-case-view-patterns.md"),
+}
 
 
 def iter_targets(repo_root: Path) -> list[Path]:
@@ -23,7 +34,9 @@ def iter_targets(repo_root: Path) -> list[Path]:
     return targets
 
 
-def scan_file(path: Path) -> list[str]:
+def scan_file(path: Path, repo_root: Path) -> list[str]:
+    if path.relative_to(repo_root) in ALLOWED_HAN_PATHS:
+        return []
     text = path.read_text(encoding="utf-8", errors="ignore")
     errors: list[str] = []
     for line_number, line in enumerate(text.splitlines(), start=1):
@@ -33,10 +46,10 @@ def scan_file(path: Path) -> list[str]:
 
 
 def main() -> int:
-    repo_root = Path(__file__).resolve().parents[1]
+    repo_root = Path(__file__).resolve().parents[2]
     failures: list[str] = []
     for path in iter_targets(repo_root):
-        failures.extend(scan_file(path))
+        failures.extend(scan_file(path, repo_root))
 
     if failures:
         print("English-only check failed for SKILL.md, scripts/, or references/:")

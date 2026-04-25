@@ -126,7 +126,7 @@ def derive_use_case_view_model_from_catalog(catalog_model: dict[str, Any]) -> di
         )
         elements.append(
             {
-                "id": f"actor-{actor_id}",
+                "id": actor_id,
                 "label": actor_label,
                 "type": "actor",
                 "group": actor_id,
