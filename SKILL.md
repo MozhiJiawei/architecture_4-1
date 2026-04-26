@@ -13,7 +13,7 @@ When the user requests only some views, produce only those views.
 
 When the user works in Chinese, keep the intermediate notes, diagram labels, summaries, and review notes in Chinese unless they explicitly ask for English or bilingual output.
 
-Keep temporary artifacts in this skill repository, not in the target repository.
+Keep temporary artifacts under the project root `.tmp`, not in this skill repository or the target repository.
 
 ## Agent Setup
 
@@ -28,10 +28,10 @@ Start one dedicated subagent for each requested view:
 Use `gpt-5.4` for every view-owning subagent.
 
 Each subagent should work in an isolated area under:
-- `tmp-artifacts/<repo-name>/logic/`
-- `tmp-artifacts/<repo-name>/development/`
-- `tmp-artifacts/<repo-name>/runtime/`
-- `tmp-artifacts/<repo-name>/use-case/`
+- `.tmp/generate-3plus1-diagrams/<repo-name>/logic/`
+- `.tmp/generate-3plus1-diagrams/<repo-name>/development/`
+- `.tmp/generate-3plus1-diagrams/<repo-name>/runtime/`
+- `.tmp/generate-3plus1-diagrams/<repo-name>/use-case/`
 
 The main agent owns review and completion:
 - load the relevant images in `ref/` before dispatching subagents
@@ -81,7 +81,7 @@ like an extension of this skill rather than a generic researcher.
 
 At dispatch time, the main agent must explicitly pass:
 - which 3+1 view the subagent owns
-- the required output directory under `tmp-artifacts/<repo-name>/<view>/`
+- the required output directory under `.tmp/generate-3plus1-diagrams/<repo-name>/<view>/`
 - the required deliverables: intermediate JSON and evidence/assumptions note
 - the exact expected filenames, for example `<view>-view.json` and `evidence-assumptions.md`
 - the language requirement for labels and notes
@@ -94,7 +94,7 @@ At minimum, each subagent prompt should restate these rules in task-specific for
 - keep repository understanding evidence-backed rather than directory-shaped
 - mark inferred relationships as inferred
 - state important omissions and assumptions explicitly
-- write artifacts only inside its assigned `tmp-artifacts/.../<view>/` area
+- write artifacts only inside its assigned `.tmp/generate-3plus1-diagrams/.../<view>/` area
 - treat the intermediate JSON as the subagent's final artifact and stop after writing it and the evidence note
 - treat later supervisor messages as incremental guidance unless they explicitly say to stop, restart, or hand off
 - do not treat a request for status as permission to exit early
