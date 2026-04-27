@@ -1,0 +1,67 @@
+{
+  "view": "runtime",
+  "title": "Runtime Multi Path Fixture",
+  "style_profile": "ref-default",
+  "groups": [
+    {
+      "id": "client",
+      "label": "Client",
+      "layout_hint": {
+        "order": 1
+      }
+    },
+    {
+      "id": "backend",
+      "label": "Backend",
+      "layout_hint": {
+        "order": 2
+      }
+    }
+  ],
+  "elements": [
+    {
+      "id": "browser",
+      "label": "Browser",
+      "type": "interface",
+      "group": "client"
+    },
+    {
+      "id": "api",
+      "label": "API Service",
+      "type": "service",
+      "group": "backend"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "checkout-step",
+      "source": "browser",
+      "target": "api",
+      "label": "checkout request",
+      "kind": "sync"
+    },
+    {
+      "id": "refund-step",
+      "source": "api",
+      "target": "browser",
+      "label": "refund response",
+      "kind": "sync"
+    }
+  ],
+  "primary_paths": [
+    {
+      "id": "checkout",
+      "label": "Checkout Flow",
+      "main_step_ids": [
+        "checkout-step"
+      ]
+    },
+    {
+      "id": "refund",
+      "label": "Refund Flow",
+      "main_step_ids": [
+        "refund-step"
+      ]
+    }
+  ]
+}

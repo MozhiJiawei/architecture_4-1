@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import copy
+
 from ..drawio_common import *  # noqa: F401,F403
 
 RUNTIME_ROOT_MARGIN = 24
@@ -97,6 +99,40 @@ def runtime_primary_paths(view_model: dict[str, Any]) -> list[dict[str, Any]]:
     if isinstance(raw, list):
         return [path for path in raw if isinstance(path, dict) and path.get("id")]
     return []
+
+
+def runtime_path_label(path: dict[str, Any], index: int) -> str:
+    return str(path.get("label") or path.get("name") or path.get("id") or f"runtime-path-{index}").strip()
+
+
+def runtime_path_filename(
+    path: dict[str, Any],
+    index: int,
+    used_stems: set[str],
+) -> str:
+    base_stem = safe_filename_stem(runtime_path_label(path, index), fallback=f"runtime-path-{index}")
+    stem = base_stem
+    suffix = 2
+    while stem.casefold() in used_stems:
+        stem = safe_filename_stem(f"{base_stem}-{suffix}", fallback=f"runtime-path-{index}-{suffix}")
+        suffix += 1
+    used_stems.add(stem.casefold())
+    return f"{stem}.drawio"
+
+
+def split_runtime_view_models(view_model: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
+    primary_paths = runtime_primary_paths(view_model)
+    if not primary_paths:
+        raise ValueError("Runtime view requires a non-empty primary_paths array.")
+
+    used_stems: set[str] = set()
+    split_models: list[tuple[str, dict[str, Any]]] = []
+    for index, path in enumerate(primary_paths, start=1):
+        path_model = copy.deepcopy(view_model)
+        path_model["primary_paths"] = [copy.deepcopy(path)]
+        path_model["title"] = runtime_path_label(path, index)
+        split_models.append((runtime_path_filename(path, index, used_stems), path_model))
+    return split_models
 
 
 def runtime_relationship_map(view_model: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -301,11 +337,8 @@ def build_runtime_diagram_xml(view_model: dict[str, Any]) -> str:
         raise ValueError("Runtime view has no primary path with renderable participants.")
 
     content_height = RUNTIME_HEADER_HEIGHT + current_y + 24
-    root_width = max(
-        RUNTIME_MIN_PAGE_WIDTH - (2 * RUNTIME_ROOT_MARGIN),
-        max_section_width + (2 * RUNTIME_NESTED_SIDE_GAP),
-    )
-    root_height = max(1200, content_height)
+    root_width = max(960 + (2 * RUNTIME_NESTED_SIDE_GAP), max_section_width + (2 * RUNTIME_NESTED_SIDE_GAP))
+    root_height = max(RUNTIME_HEADER_HEIGHT + RUNTIME_NESTED_TOP_GAP + RUNTIME_MIN_SECTION_HEIGHT + 24, content_height)
     page_width = root_width + (2 * RUNTIME_ROOT_MARGIN)
     page_height = root_height + (2 * RUNTIME_ROOT_MARGIN)
 

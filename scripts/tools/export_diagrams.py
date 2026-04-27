@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlsplit
 
-from PIL import Image
+from PIL import Image, ImageChops
 from playwright.async_api import ConsoleMessage, async_playwright
 
 
@@ -23,6 +23,7 @@ DRAWIO_WEBAPP_INDEX = DRAWIO_WEBAPP_ROOT / "index.html"
 DRAWIO_REMOTE_EMBED_URL = "https://embed.diagrams.net/"
 HARNESS_TEMPLATE = Path(__file__).with_name("drawio_export_harness.html")
 BACKGROUND = (255, 255, 255, 255)
+DEFAULT_CROP_MARGIN = 24
 
 
 def iter_targets(target: Path) -> list[Path]:
@@ -168,11 +169,33 @@ def flatten_png_background(path: Path) -> None:
         flattened.save(path)
 
 
+def crop_png_whitespace(path: Path, margin: int = DEFAULT_CROP_MARGIN) -> None:
+    with Image.open(path) as img:
+        rgba = img.convert("RGBA")
+        visible = Image.alpha_composite(Image.new("RGBA", rgba.size, BACKGROUND), rgba).convert("RGB")
+        background = Image.new("RGB", visible.size, BACKGROUND[:3])
+        bbox = ImageChops.difference(visible, background).getbbox()
+        if bbox is None:
+            return
+
+        left = max(0, bbox[0] - margin)
+        top = max(0, bbox[1] - margin)
+        right = min(rgba.width, bbox[2] + margin)
+        bottom = min(rgba.height, bbox[3] + margin)
+        if (left, top, right, bottom) == (0, 0, rgba.width, rgba.height):
+            return
+
+        cropped = rgba.crop((left, top, right, bottom))
+        cropped.save(path)
+
+
 async def export_with_real_drawio(
     drawio_path: Path,
     output_path: Path,
     *,
     flatten_png: bool = True,
+    crop_png: bool = True,
+    crop_margin: int = DEFAULT_CROP_MARGIN,
 ) -> None:
     ensure_drawio_runtime()
 
@@ -235,8 +258,11 @@ async def export_with_real_drawio(
             finally:
                 await browser.close()
 
-    if flatten_png and output_path.suffix.lower() == ".png":
-        flatten_png_background(output_path)
+    if output_path.suffix.lower() == ".png":
+        if crop_png:
+            crop_png_whitespace(output_path, margin=crop_margin)
+        if flatten_png:
+            flatten_png_background(output_path)
 
 
 def main() -> int:
@@ -263,6 +289,17 @@ def main() -> int:
         "--preserve-alpha",
         action="store_true",
         help="Keep PNG alpha instead of flattening onto white.",
+    )
+    parser.add_argument(
+        "--no-crop",
+        action="store_true",
+        help="Keep draw.io's full exported canvas instead of trimming PNG whitespace.",
+    )
+    parser.add_argument(
+        "--crop-margin",
+        type=int,
+        default=DEFAULT_CROP_MARGIN,
+        help=f"Whitespace margin to keep around cropped PNGs (default: {DEFAULT_CROP_MARGIN}px).",
     )
     args = parser.parse_args()
 
@@ -291,6 +328,8 @@ def main() -> int:
                     drawio_path,
                     output_path,
                     flatten_png=not args.preserve_alpha,
+                    crop_png=not args.no_crop,
+                    crop_margin=max(0, args.crop_margin),
                 )
             )
             print(f"Exported {drawio_path} -> {output_path}")

@@ -181,6 +181,13 @@ def derive_use_case_view_model_from_catalog(catalog_model: dict[str, Any]) -> di
     return derived
 
 
+def split_use_case_catalog_view_models(catalog_model: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
+    return [
+        ("use-case-catalog-view.drawio", catalog_model),
+        ("use-case-view.drawio", derive_use_case_view_model_from_catalog(catalog_model)),
+    ]
+
+
 def use_case_catalog_title(view_model: dict[str, Any], language: str) -> str:
     default_title = "\u7528\u4f8b\u76ee\u5f55" if language == "zh" else "Use Case Catalog"
     return str(view_model.get("title") or default_title)

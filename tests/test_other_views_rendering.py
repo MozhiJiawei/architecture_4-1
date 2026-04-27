@@ -11,7 +11,7 @@ SCRIPTS_DIR = REPO_ROOT / "scripts"
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
-from render_drawio import render_use_case_pair_from_catalog, render_view_model
+from render_drawio import render_use_case_pair_from_catalog, render_view_model, render_view_outputs
 from tools.validate_drawio import validate_file
 
 
@@ -65,6 +65,30 @@ def test_runtime_view_fixture_renders_primary_path_steps() -> None:
     assert "Browser" in xml
     assert "submit request" in xml
     assert "return result" in xml
+
+
+def test_runtime_view_multiple_primary_paths_render_as_separate_files() -> None:
+    output_dir = TEST_OUTPUT_DIR / "runtime-multiple"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    rendered_paths = render_view_outputs(
+        FIXTURE_ROOT / "runtime_view" / "valid-multiple-paths.json",
+        output_dir,
+    )
+
+    assert [path.name for path in rendered_paths] == ["Checkout Flow.drawio", "Refund Flow.drawio"]
+    for rendered_path in rendered_paths:
+        _, errors = validate_file(rendered_path)
+        assert not errors
+
+    checkout_xml = without_soft_breaks((output_dir / "Checkout Flow.drawio").read_text(encoding="utf-8"))
+    refund_xml = without_soft_breaks((output_dir / "Refund Flow.drawio").read_text(encoding="utf-8"))
+    assert "Checkout Flow" in checkout_xml
+    assert "checkout request" in checkout_xml
+    assert "refund response" not in checkout_xml
+    assert "Refund Flow" in refund_xml
+    assert "refund response" in refund_xml
+    assert "checkout request" not in refund_xml
 
 
 def test_use_case_view_fixture_renders_boundary_panels_and_include() -> None:

@@ -205,6 +205,39 @@ def sanitize_id(value: str) -> str:
     return cleaned or "item"
 
 
+def safe_filename_stem(value: str, fallback: str = "diagram") -> str:
+    cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "-", str(value or "").strip())
+    cleaned = re.sub(r"\s+", " ", cleaned).strip(" .")
+    if not cleaned:
+        cleaned = fallback
+    if cleaned.upper() in {
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        "COM1",
+        "COM2",
+        "COM3",
+        "COM4",
+        "COM5",
+        "COM6",
+        "COM7",
+        "COM8",
+        "COM9",
+        "LPT1",
+        "LPT2",
+        "LPT3",
+        "LPT4",
+        "LPT5",
+        "LPT6",
+        "LPT7",
+        "LPT8",
+        "LPT9",
+    }:
+        cleaned = f"{cleaned}-diagram"
+    return cleaned[:120].rstrip(" .") or fallback
+
+
 def drawio_filename_for_view(view_model: dict[str, Any], source_path: Path) -> str:
     view = str(view_model.get("view") or source_path.stem).strip().lower()
     if not view:

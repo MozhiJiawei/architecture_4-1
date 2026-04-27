@@ -16,11 +16,11 @@ try:
     from views.logic.render import build_logic_diagram_xml
     from views.logic.validate import validate_logic_view
     from views.runtime.layout import solve_runtime_view_layout
-    from views.runtime.render import build_runtime_diagram_xml
+    from views.runtime.render import build_runtime_diagram_xml, split_runtime_view_models
     from views.runtime.validate import validate_runtime_view
     from views.use_case.catalog import (
         build_use_case_catalog_diagram_xml,
-        derive_use_case_view_model_from_catalog,
+        split_use_case_catalog_view_models,
     )
     from views.use_case.layout import solve_use_case_catalog_layout, solve_use_case_view_layout
     from views.use_case.render import build_use_case_diagram_xml
@@ -35,11 +35,11 @@ except ModuleNotFoundError:
     from scripts.views.logic.render import build_logic_diagram_xml
     from scripts.views.logic.validate import validate_logic_view
     from scripts.views.runtime.layout import solve_runtime_view_layout
-    from scripts.views.runtime.render import build_runtime_diagram_xml
+    from scripts.views.runtime.render import build_runtime_diagram_xml, split_runtime_view_models
     from scripts.views.runtime.validate import validate_runtime_view
     from scripts.views.use_case.catalog import (
         build_use_case_catalog_diagram_xml,
-        derive_use_case_view_model_from_catalog,
+        split_use_case_catalog_view_models,
     )
     from scripts.views.use_case.layout import solve_use_case_catalog_layout, solve_use_case_view_layout
     from scripts.views.use_case.render import build_use_case_diagram_xml
@@ -140,32 +140,78 @@ def render_view_model(input_path: Path, output_dir: Path) -> Path:
     return output_path
 
 
+def render_named_view_models(
+    named_models: list[tuple[str, dict[str, Any]]],
+    output_dir: Path,
+) -> list[Path]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    rendered_paths: list[Path] = []
+    for filename, view_model in named_models:
+        validate_view_model(view_model)
+        output_path = output_dir / filename
+        xml = render_view_xml(view_model)
+        output_path.write_text(xml, encoding="utf-8")
+        validate_rendered_drawio(output_path)
+        rendered_paths.append(output_path)
+    return rendered_paths
+
+
+def render_runtime_primary_paths(input_path: Path, output_dir: Path) -> list[Path]:
+    view_model = load_view_model(input_path)
+    if str(view_model.get("view") or "").strip().lower() != "runtime":
+        return [render_view_model(input_path, output_dir)]
+
+    solved_model = solve_view_layout(view_model)
+    validate_view_model(solved_model)
+    rendered_paths = render_named_view_models(split_runtime_view_models(solved_model), output_dir)
+    legacy_output_path = output_dir / drawio_filename_for_view(solved_model, input_path)
+    if legacy_output_path.exists() and legacy_output_path not in rendered_paths:
+        legacy_output_path.unlink()
+    return rendered_paths
+
+
 def render_use_case_pair_from_catalog(input_path: Path, output_dir: Path) -> list[Path]:
     catalog_model = load_view_model(input_path)
     if str(catalog_model.get("view") or "").strip().lower() != "use-case-catalog":
         return [render_view_model(input_path, output_dir)]
 
-    output_dir.mkdir(parents=True, exist_ok=True)
-    rendered_paths: list[Path] = []
-
     solved_catalog_model = solve_view_layout(catalog_model)
     validate_view_model(solved_catalog_model)
-    catalog_output_path = output_dir / drawio_filename_for_view(solved_catalog_model, input_path)
-    catalog_xml = render_view_xml(solved_catalog_model)
-    catalog_output_path.write_text(catalog_xml, encoding="utf-8")
-    validate_rendered_drawio(catalog_output_path)
-    rendered_paths.append(catalog_output_path)
+    named_models = [
+        (filename, solve_view_layout(view_model))
+        for filename, view_model in split_use_case_catalog_view_models(solved_catalog_model)
+    ]
+    return render_named_view_models(named_models, output_dir)
 
-    derived_view_model = derive_use_case_view_model_from_catalog(solved_catalog_model)
-    solved_derived_model = solve_view_layout(derived_view_model)
-    validate_view_model(solved_derived_model)
-    derived_output_path = output_dir / "use-case-view.drawio"
-    derived_xml = render_view_xml(solved_derived_model)
-    derived_output_path.write_text(derived_xml, encoding="utf-8")
-    validate_rendered_drawio(derived_output_path)
-    rendered_paths.append(derived_output_path)
 
-    return rendered_paths
+def render_view_outputs(input_path: Path, output_dir: Path) -> list[Path]:
+    view_model = load_view_model(input_path)
+    view = str(view_model.get("view") or "").strip().lower()
+    if view == "runtime":
+        return render_runtime_primary_paths(input_path, output_dir)
+    if view == "use-case-catalog":
+        return render_use_case_pair_from_catalog(input_path, output_dir)
+    return [render_view_model(input_path, output_dir)]
+
+
+def cleanup_legacy_runtime_preview(
+    input_path: Path,
+    rendered_paths: list[Path],
+    preview_dir: Path,
+    preview_format: str,
+) -> None:
+    view_model = load_view_model(input_path)
+    if str(view_model.get("view") or "").strip().lower() != "runtime":
+        return
+
+    legacy_stem = Path(drawio_filename_for_view(view_model, input_path)).stem
+    rendered_stems = {path.stem.casefold() for path in rendered_paths}
+    if legacy_stem.casefold() in rendered_stems:
+        return
+
+    legacy_preview_path = preview_dir / f"{legacy_stem}.{preview_format}"
+    if legacy_preview_path.exists():
+        legacy_preview_path.unlink()
 
 
 def export_rendered_preview(
@@ -242,7 +288,7 @@ def main() -> int:
         if not inputs:
             raise ValueError(f"No JSON view models found in {args.input}")
         for input_path in inputs:
-            rendered_paths = render_use_case_pair_from_catalog(input_path, output_dir)
+            rendered_paths = render_view_outputs(input_path, output_dir)
             for rendered in rendered_paths:
                 print(f"Rendered {input_path} -> {rendered}")
                 if args.export_previews:
@@ -253,6 +299,13 @@ def main() -> int:
                         preserve_alpha=args.preserve_preview_alpha,
                     )
                     print(f"Previewed {rendered} -> {preview_path}")
+            if args.export_previews:
+                cleanup_legacy_runtime_preview(
+                    input_path,
+                    rendered_paths,
+                    preview_dir,
+                    args.preview_format,
+                )
     except Exception as exc:
         print(f"render_drawio.py failed: {exc}")
         return 1
