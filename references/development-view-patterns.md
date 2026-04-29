@@ -55,7 +55,8 @@ Each development `relationships` entry should usually include:
 
 - `source`
 - `target`
-- optional `label`
+- `label`: full relationship meaning for legends, review, and evidence
+- `summary_label`: subagent-generated edge text, preferably Chinese when the task is in Chinese, no more than 10 characters
 - `kind`, usually `dependency`
 - optional `inferred`
 - optional `evidence_ids`
@@ -96,6 +97,8 @@ Prepare the model so the renderer can derive that shape:
 - keep one element per developer-meaningful module, not per file
 - keep element labels short enough to fit inside rectangular cards
 - put detailed path lists in `paths` or evidence, not in the rendered label
+- generate `summary_label` for every rendered relationship; do not use opaque codes like `R1` or `R2` as the visible edge text
+- keep `summary_label` as a short action or dependency phrase such as `读取字段`, `生成配置`, or `验证注入`
 - keep `relationships` as the authoritative full dependency inventory for development view rendering
 - use notes only when a crucial modeling caveat cannot live in `uncertainties`
 - render dependencies as straight lines between cards; do not rely on hand-authored orthogonal polylines for this view
@@ -157,6 +160,7 @@ For subagents, this means:
       "source": "outer-loop",
       "target": "self-improve-step",
       "label": "调度单次自改进",
+      "summary_label": "调度改进",
       "kind": "dependency",
       "inferred": false,
       "evidence_ids": ["ev-outer-loop", "ev-self-improve"]

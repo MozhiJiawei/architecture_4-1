@@ -222,6 +222,7 @@
       "source_port": "right",
       "target_port": "left",
       "label": "dispatch structured export",
+      "summary_label": "dispatch",
       "kind": "dependency",
       "core": true,
       "segments": [
@@ -244,6 +245,7 @@
       "source_port": "top",
       "target_port": "bottom",
       "label": "run shared model checks",
+      "summary_label": "check",
       "kind": "dependency",
       "core": true,
       "segments": [
@@ -266,6 +268,7 @@
       "source_port": "right",
       "target_port": "left",
       "label": "publish drawio result",
+      "summary_label": "publish",
       "kind": "dependency",
       "core": true,
       "segments": [
@@ -288,6 +291,7 @@
       "source_port": "bottom",
       "target_port": "top",
       "label": "write final artifact",
+      "summary_label": "write",
       "kind": "dependency",
       "core": true,
       "segments": [
@@ -310,6 +314,7 @@
       "source_port": "right",
       "target_port": "left",
       "label": "share full labels",
+      "summary_label": "labels",
       "kind": "dependency",
       "core": false,
       "segments": [

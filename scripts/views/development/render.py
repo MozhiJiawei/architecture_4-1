@@ -80,14 +80,14 @@ def node_value(element: dict[str, object], node_style: dict[str, str]) -> str:
     return (
         "<table style='width:100%;height:100%;border-collapse:collapse;table-layout:fixed;'>"
         f"<tr><td style='background:{title_fill};color:{title_color};"
-        f"border-bottom:1px solid {stroke};font-size:13px;font-weight:700;"
+        "font-size:13px;font-weight:700;"
         "text-align:center;padding:8px 10px;overflow-wrap:anywhere;word-break:break-word;'>"
         f"{label}</td></tr>"
-        f"<tr><td style='background:{section_fill};border-bottom:1px solid {stroke};padding:8px 10px;"
+        f"<tr><td style='background:{section_fill};padding:8px 10px;"
         "font-size:11px;line-height:1.35;text-align:left;vertical-align:top;overflow-wrap:anywhere;word-break:break-word;'>"
         "<div style='font-weight:700;margin-bottom:4px;'>简述</div>"
         f"<div style='overflow-wrap:anywhere;word-break:break-word;'>{responsibility}</div></td></tr>"
-        f"<tr><td style='background:{section_fill};padding:8px 10px;font-size:11px;line-height:1.35;"
+        f"<tr><td style='background:{section_fill};border-top:1px solid {stroke};padding:8px 10px;font-size:11px;line-height:1.35;"
         "text-align:left;vertical-align:top;overflow-wrap:anywhere;word-break:break-word;'>"
         "<div style='font-weight:700;margin-bottom:4px;'>接口</div>"
         f"<div style='overflow-wrap:anywhere;word-break:break-word;'>{exposes}</div></td></tr>"
@@ -132,7 +132,7 @@ def relationship_legend_value(model: dict[str, object]) -> str:
         for relationship in model.get("relationships") or []:
             if not isinstance(relationship, dict):
                 continue
-            code = str(relationship.get("code") or relationship.get("line_label") or "").strip()
+            code = relationship_display_label(relationship)
             label = str(relationship.get("label") or "").strip()
             source = str(relationship.get("source") or "").strip()
             target = str(relationship.get("target") or "").strip()
@@ -140,7 +140,7 @@ def relationship_legend_value(model: dict[str, object]) -> str:
                 items.append({"code": code, "label": f"{source} -> {target}: {label}".strip(": ")})
     rows = [f"<tr><td colspan='2' style='font-weight:700;padding:2px 0 8px 0;'>{escape(title)}</td></tr>"]
     for item in items:
-        code = str(item.get("code") or "").strip()
+        code = str(item.get("summary_label") or item.get("code") or "").strip()
         label = str(item.get("label") or "").strip()
         if code and label:
             rows.append(
@@ -150,6 +150,16 @@ def relationship_legend_value(model: dict[str, object]) -> str:
                 "</tr>"
             )
     return "<table style='width:100%;border-collapse:collapse;font-size:12px;line-height:1.25;'>" + "".join(rows) + "</table>"
+
+
+def relationship_display_label(relationship: dict[str, object]) -> str:
+    return str(
+        relationship.get("summary_label")
+        or relationship.get("line_label")
+        or relationship.get("code")
+        or relationship.get("label")
+        or ""
+    ).strip()
 
 
 def build_development_diagram_xml(view_model: dict[str, object]) -> str:
@@ -297,7 +307,7 @@ def build_development_diagram_xml(view_model: dict[str, object]) -> str:
                     ET.SubElement(array, "mxPoint", x=str(end.get("x")), y=str(end.get("y")))
 
         label_box = relationship.get("label_box")
-        label = str(relationship.get("code") or relationship.get("line_label") or relationship.get("label") or "").strip()
+        label = relationship_display_label(relationship)
         if label:
             label_geometry = {"x": 0, "y": 0, "width": 32, "height": 18}
             if isinstance(label_box, dict):
@@ -311,7 +321,7 @@ def build_development_diagram_xml(view_model: dict[str, object]) -> str:
                 style=(
                     "text;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;"
                     "fontSize=12;fontStyle=1;fillColor=none;strokeColor=none;"
-                    f"{style_pairs(edge_style, ('fontColor', 'strokeColor'))}"
+                    f"{style_pairs(edge_style, ('fontColor',))}"
                 ),
                 vertex="1",
                 connectable="0",
@@ -344,7 +354,7 @@ def build_development_diagram_xml(view_model: dict[str, object]) -> str:
         id="development-legend",
         value=legend_value(model, profile),
         style=(
-            "rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=10;fontSize=12;"
+            "rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=10;fontSize=12;"
             f"{style_pairs(legend_style, ('fillColor', 'strokeColor', 'fontColor'))}"
         ),
         vertex="1",
@@ -376,7 +386,7 @@ def build_development_diagram_xml(view_model: dict[str, object]) -> str:
             id="development-relationship-legend",
             value=relationship_legend_value(model),
             style=(
-                "rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=10;fontSize=12;"
+                "rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=10;fontSize=12;"
                 f"{style_pairs(legend_style, ('fillColor', 'strokeColor', 'fontColor'))}"
             ),
             vertex="1",

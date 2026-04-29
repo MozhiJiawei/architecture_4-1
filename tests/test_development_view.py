@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import copy
+import json
 import sys
 from pathlib import Path
 
@@ -30,6 +32,17 @@ def test_valid_balanced_fixture_passes_structure_validation() -> None:
     report = validate_development_view(FIXTURE_DIR / "valid-balanced.json")
     assert not report.errors
     assert not report.warnings
+
+
+def test_overlong_relationship_summary_label_warns() -> None:
+    model = json.loads((FIXTURE_DIR / "valid-balanced.json").read_text(encoding="utf-8"))
+    model = copy.deepcopy(model)
+    model["relationships"][0]["summary_label"] = "this label is too long"
+
+    report = validate_development_view(model)
+
+    assert not report.errors
+    assert "overlong-summary-label" in rule_ids(report.warnings)
 
 
 def test_duplicate_edge_fixture_reports_duplicate_edge() -> None:
@@ -81,5 +94,8 @@ def test_valid_balanced_fixture_renders_and_passes_drawio_validation() -> None:
     assert "Coordinates multi-generation development-view export runs" in xml
     assert "+ choose_selfimproves()" in xml
     assert "+ export_with_real_drawio()" in xml
+    assert "dispatch" in xml
+    assert "publish" in xml
+    assert "R1" not in xml
     assert "dispatch structured export" in xml
     assert "publish drawio result" in xml

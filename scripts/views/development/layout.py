@@ -21,8 +21,8 @@ TITLE_HEIGHT = 34
 SECTION_HEADER_HEIGHT = 22
 LINE_HEIGHT = 18
 CARD_PADDING = 18
-GRID_X_STEP = 445
-GRID_Y_STEP = 258
+GRID_X_STEP = 448
+GRID_Y_STEP = 330
 MARGIN_X = 64
 MARGIN_Y = 128
 GROUP_PADDING = 32
@@ -695,6 +695,11 @@ def apply_geometry(
         relationship_id = str(solved_relationship.get("id") or f"rel-{index}")
         route = routes_by_id[relationship_id]
         code = code_by_signature.get(signature, f"R{index}")
+        display_label = str(
+            relationship.get("summary_label")
+            or relationship.get("line_label")
+            or code
+        ).strip()
         relationship["id"] = relationship_id
         relationship["code"] = code
         relationship["kind"] = str(relationship.get("kind") or "dependency")
@@ -702,12 +707,12 @@ def apply_geometry(
         relationship["source_port"] = route.source_port
         relationship["target_port"] = route.target_port
         relationship["segments"] = [{"start": point_to_mapping(route.start), "end": point_to_mapping(route.end)}]
-        relationship["label_box"] = label_box_for_route(route, code)
+        relationship["label_box"] = label_box_for_route(route, display_label)
         label = str(relationship.get("label") or "").strip()
         source = str(relationship.get("source") or "").strip()
         target = str(relationship.get("target") or "").strip()
         if label:
-            relationship_legend_items.append({"code": code, "label": f"{source} -> {target}: {label}"})
+            relationship_legend_items.append({"code": display_label, "label": f"{source} -> {target}: {label}"})
 
     apply_group_frames(solved, frames)
     solved["legend"] = legend_for(solved, legend_frame)

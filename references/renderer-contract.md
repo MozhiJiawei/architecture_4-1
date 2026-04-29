@@ -92,6 +92,7 @@ If a relationship does not need to be drawn, set `render: false` instead of inve
 - Render `responsibility` completely, allowing wrapped display text when needed.
 - Render every `exposes` item and place each interface on its own display line.
 - Express `group` by color and a top-right legend rather than relying on group frames.
+- Use relationship `summary_label` as the visible edge text when present; fall back to legacy `line_label`, `code`, then `label` only for older models.
 - If a development view is too dense to render cleanly, prefer simplifying the intermediate model over adding renderer-specific exceptions.
 
 ## Use-Case Rendering Contract

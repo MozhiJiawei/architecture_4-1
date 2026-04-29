@@ -161,6 +161,8 @@ Keep the prompt aligned to that contract:
 - emit `development-view.json` with the shared DSL plus development-specific fields such as `build_roots`, `module_dependencies`, `ownership_notes`, element-level `code_kind`, `paths`, and `responsibility` when they help
 - keep labels short and move filesystem detail into `paths`, evidence, or notes
 - use `kind: "dependency"` for code/package relationships unless a future renderer contract defines something more specific
+- generate `summary_label` for every rendered relationship; this is the visible edge label and must summarize the full relationship text in no more than 10 characters, using Chinese when the task is in Chinese
+- keep the full relationship meaning in `label`; never make the visible edge label an opaque code such as `R1` or `R2`
 - collapse helper fragments into one maintained module when that is how developers reason about the code
 - keep `responsibility` complete in the JSON even if the renderer later wraps it for display
 - keep `exposes` lossless: one interface or entrypoint per array item, with no pre-merged summary line
@@ -240,6 +242,7 @@ For development view:
 - prefer code ownership, package boundaries, and maintained module cuts over runtime sequencing
 - start from the target use case and keep only the code units needed to explain that slice plus its shared support modules
 - use `paths` and evidence to anchor each module in the repository, but keep rendered labels short
+- make the development subagent, not the renderer, author relationship `summary_label` values; use short action phrases such as `读取字段`, `生成配置`, or `验证注入`
 - treat generated outputs, caches, logs, and run directories as omissions unless the user explicitly wants them
 - render straight dependency lines only; do not introduce hand-authored orthogonal polylines for development view
 - expect development group meaning to be expressed by color and legend instead of boxed lanes

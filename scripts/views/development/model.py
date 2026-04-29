@@ -217,6 +217,7 @@ def geometry_digest(model: dict[str, Any]) -> str:
                 "segments": relationship.get("segments"),
                 "label_box": relationship.get("label_box"),
                 "code": relationship.get("code"),
+                "summary_label": relationship.get("summary_label"),
             }
             for relationship in (model.get("relationships") or [])
             if isinstance(relationship, dict)

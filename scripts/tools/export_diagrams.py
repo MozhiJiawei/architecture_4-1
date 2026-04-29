@@ -17,9 +17,26 @@ from PIL import Image, ImageChops
 from playwright.async_api import ConsoleMessage, async_playwright
 
 
-DRAWIO_EXTENSION_ROOT = Path.home() / ".vscode" / "extensions" / "hediet.vscode-drawio-1.9.0"
-DRAWIO_WEBAPP_ROOT = DRAWIO_EXTENSION_ROOT / "drawio" / "src" / "main" / "webapp"
+DRAWIO_EXTENSION_ROOTS = [
+    Path.home() / ".vscode" / "extensions" / "hediet.vscode-drawio-1.9.0",
+    Path.home() / ".cursor" / "extensions" / "hediet.vscode-drawio-1.6.6-universal",
+]
+
+
+def find_drawio_webapp_root() -> Path:
+    for extension_root in DRAWIO_EXTENSION_ROOTS:
+        webapp_root = extension_root / "drawio" / "src" / "main" / "webapp"
+        if (webapp_root / "index.html").exists():
+            return webapp_root
+        if (webapp_root / "js" / "app.min.js").exists() and (webapp_root / "mxgraph" / "mxClient.js").exists():
+            return webapp_root
+    return DRAWIO_EXTENSION_ROOTS[0] / "drawio" / "src" / "main" / "webapp"
+
+
+DRAWIO_WEBAPP_ROOT = find_drawio_webapp_root()
 DRAWIO_WEBAPP_INDEX = DRAWIO_WEBAPP_ROOT / "index.html"
+DRAWIO_WEBAPP_APP = DRAWIO_WEBAPP_ROOT / "js" / "app.min.js"
+DRAWIO_WEBAPP_MXCLIENT = DRAWIO_WEBAPP_ROOT / "mxgraph" / "mxClient.js"
 DRAWIO_REMOTE_EMBED_URL = "https://embed.diagrams.net/"
 HARNESS_TEMPLATE = Path(__file__).with_name("drawio_export_harness.html")
 BACKGROUND = (255, 255, 255, 255)
@@ -38,7 +55,12 @@ def ensure_drawio_runtime() -> None:
     if not DRAWIO_WEBAPP_ROOT.exists() and not DRAWIO_REMOTE_EMBED_URL:
         raise FileNotFoundError(
             "Bundled draw.io webapp not found at "
-            f"{DRAWIO_WEBAPP_ROOT}. Install the VS Code draw.io extension first."
+            f"{DRAWIO_WEBAPP_ROOT}. Install the VS Code or Cursor draw.io extension first."
+        )
+    if DRAWIO_WEBAPP_APP.exists() and not DRAWIO_WEBAPP_MXCLIENT.exists() and not DRAWIO_WEBAPP_INDEX.exists():
+        raise FileNotFoundError(
+            "Bundled draw.io webapp is incomplete at "
+            f"{DRAWIO_WEBAPP_ROOT}; missing {DRAWIO_WEBAPP_MXCLIENT}."
         )
     if not HARNESS_TEMPLATE.exists():
         raise FileNotFoundError(f"Harness template not found: {HARNESS_TEMPLATE}")
@@ -49,9 +71,124 @@ def build_harness_html(base_href: str) -> str:
     return template.replace("__BASE_HREF__", base_href)
 
 
+def build_local_drawio_index_html() -> str:
+    return """<!doctype html>
+<html>
+<head>
+  <base href="/" />
+  <meta charset="utf-8">
+  <script>
+    var log = function() {};
+    var editorUi;
+    window.acquireVsCodeApi = function() {
+      return { postMessage: function(msg) { window.parent.postMessage(msg, '*'); } };
+    };
+    const api = window.VsCodeApi = acquireVsCodeApi();
+    Object.defineProperty(window, 'mxIsElectron', { value: false });
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: function() { return null; },
+        setItem: function() {},
+        removeItem: function() {}
+      }
+    });
+    Object.defineProperty(document, 'cookie', { value: '' });
+    const fakedWindowOpener = { postMessage: function(msg) { api.postMessage(msg); } };
+    Object.defineProperty(window, 'opener', { value: fakedWindowOpener });
+    window.addEventListener('message', function(evt) {
+      if (evt.source !== fakedWindowOpener) {
+        const fakedEvt = new Event('message');
+        fakedEvt.source = fakedWindowOpener;
+        fakedEvt.data = evt.data;
+        const origFocus = window.focus;
+        window.focus = function() {};
+        try {
+          window.dispatchEvent(fakedEvt);
+        } finally {
+          window.focus = origFocus;
+        }
+        evt.stopPropagation();
+        evt.preventDefault();
+      }
+    });
+    var appearance = 0, theme = 'kennedy';
+    var urlParams = {
+      embed: '1',
+      configure: '1',
+      proto: 'json',
+      ui: theme,
+      dark: '0',
+      'high-contrast': '0',
+      lang: 'zh',
+      noSaveBtn: '1',
+      noExitBtn: '1',
+      chrome: '1',
+      'svg-warning': '0'
+    };
+    var isLocalStorage = true;
+    function mxscript(src, onLoad, id, dataAppKey, noWrite) {
+      if (onLoad != null || noWrite) {
+        var s = document.createElement('script');
+        s.setAttribute('type', 'text/javascript');
+        s.setAttribute('src', src);
+        if (id != null) s.setAttribute('id', id);
+        if (dataAppKey != null) s.setAttribute('data-app-key', dataAppKey);
+        if (onLoad != null) s.onload = s.onreadystatechange = function() { onLoad(); };
+        var t = document.getElementsByTagName('script')[0];
+        if (t != null) t.parentNode.insertBefore(s, t);
+      } else {
+        document.write('<script src="' + src + '"></scr' + 'ipt>');
+      }
+    }
+    function mxinclude(src) {
+      var g = document.createElement('script');
+      g.type = 'text/javascript';
+      g.async = true;
+      g.src = src;
+      var s = document.getElementsByTagName('script')[0];
+      s.parentNode.insertBefore(g, s);
+    }
+    var mxLoadResources = false;
+    var mxForceIncludes = false;
+  </script>
+  <link rel="stylesheet" type="text/css" href="styles/grapheditor.css" />
+  <script src="js/PreConfig.js"></script>
+  <script src="js/app.min.js"></script>
+  <script src="js/extensions.min.js"></script>
+  <script src="js/stencils.min.js"></script>
+  <script src="js/shapes-14-6-5.min.js"></script>
+  <script src="js/PostConfig.js"></script>
+</head>
+<body class="geEditor">
+  <div id="geInfo"><div class="geBlock"><h2 id="geStatus">Loading...</h2></div></div>
+  <script>
+    function patchFn(clazz, fnName, fnFactory) {
+      var old = clazz[fnName];
+      clazz[fnName] = fnFactory(old);
+    }
+    if (window.EditorUi) {
+      EditorUi.prototype.addEmbedButtons = function() {};
+      patchFn(EditorUi.prototype, 'init', function(old) {
+        return function() {
+          editorUi = this;
+          return old.apply(this, arguments);
+        };
+      });
+    }
+    if (window.App && typeof window.App.main === 'function') {
+      App.main();
+    }
+  </script>
+</body>
+</html>
+"""
+
+
 def drawio_base_href(host: str, port: int) -> str:
     if DRAWIO_WEBAPP_INDEX.exists():
         return f"http://{host}:{port}/index.html"
+    if DRAWIO_WEBAPP_APP.exists():
+        return f"http://{host}:{port}/local-index.html"
     return DRAWIO_REMOTE_EMBED_URL
 
 
@@ -117,12 +254,15 @@ class DrawioHarness:
 class DrawioRequestHandler(SimpleHTTPRequestHandler):
     webapp_root: Path
     harness_path: Path
+    local_index_path: Path
 
     def translate_path(self, path: str) -> str:
         parsed = urlsplit(path)
         clean_path = posixpath.normpath(unquote(parsed.path))
         if clean_path in {"/", "/harness.html"}:
             return str(self.harness_path)
+        if clean_path == "/local-index.html":
+            return str(self.local_index_path)
         return str(self.webapp_root / clean_path.lstrip("/"))
 
     def log_message(self, format: str, *args: Any) -> None:
@@ -141,6 +281,8 @@ def start_drawio_server():
             build_harness_html(drawio_base_href(host, port)),
             encoding="utf-8",
         )
+        local_index_path = temp_root / "local-index.html"
+        local_index_path.write_text(build_local_drawio_index_html(), encoding="utf-8")
 
         handler = type(
             "BoundDrawioRequestHandler",
@@ -148,6 +290,7 @@ def start_drawio_server():
             {
                 "webapp_root": DRAWIO_WEBAPP_ROOT,
                 "harness_path": harness_path,
+                "local_index_path": local_index_path,
             },
         )
         server.RequestHandlerClass = handler
@@ -208,7 +351,7 @@ async def export_with_real_drawio(
 
                 await page.expose_function("drawioHostPostMessage", harness.on_drawio_message)
                 page.on("console", harness.on_console)
-                await page.goto(harness_url, wait_until="load")
+                await page.goto(harness_url, wait_until="domcontentloaded", timeout=90000)
 
                 await harness.wait_for_event("configure")
                 await harness.send_action({

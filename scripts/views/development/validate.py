@@ -39,6 +39,7 @@ except ModuleNotFoundError:
 GEOMETRY_EPSILON = 1e-6
 MIN_COMPACTNESS = 0.15
 MAX_EDGE_LENGTH_FACTOR = 0.75
+MAX_SUMMARY_LABEL_CHARS = 10
 
 
 def is_close(value: float, target: float = 0.0) -> bool:
@@ -240,6 +241,13 @@ def validate_development_view(path_or_model: Path | str | dict[str, Any]) -> Val
             report.add_error("core-edge-missing", f"Core relationship {relationship_id} is marked render=false.", relationship_id)
         if relationship.get("core") is True:
             seen_core_signatures.add(signature)
+        summary_label = str(relationship.get("summary_label") or "").strip()
+        if summary_label and len(summary_label) > MAX_SUMMARY_LABEL_CHARS:
+            report.add_warning(
+                "overlong-summary-label",
+                f"Relationship {relationship_id} summary_label should be {MAX_SUMMARY_LABEL_CHARS} characters or fewer.",
+                relationship_id,
+            )
 
     for signature, relationship_ids in signature_counts.items():
         if len(relationship_ids) > 1:
