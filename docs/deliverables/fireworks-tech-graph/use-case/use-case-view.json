@@ -1,0 +1,286 @@
+{
+  "view": "use-case-catalog",
+  "title": "fireworks-tech-graph 用例目录",
+  "summary": "围绕 fireworks-tech-graph 对外暴露的出图能力、配置能力与维护能力整理的用例目录。",
+  "scope": [
+    "仅覆盖 README、SKILL、agents 元数据与 scripts 中公开暴露的用户可见能力。",
+    "仅建模用户可感知的出图、配置、验证、测试与维护入口，不把内部渲染实现细节当作用例。"
+  ],
+  "omissions": [
+    "未把单个 SVG 节点、箭头路由、样式 token、图标词汇表当作独立用例。",
+    "未把仓库内部脚本步骤、具体 fixture 名称或单次 CLI 参数解析过程拆成用例。"
+  ],
+  "uncertainties": [
+    "仓库以 README/SKILL 叙述能力为主，缺少真实调用日志；P0 用例按公开入口面与用户目标归并。",
+    "`agents/openai.yaml` 只证明存在兼容运行时入口，没有展示独立的自动化编排流程，因此将 AI/子Agent 运行时建模为次要参与者。",
+    "`generate-diagram.sh` 明确说明它只负责验证与导出，因此把“模板化生成 SVG”与“校验并导出 PNG”拆成两个支撑用例。"
+  ],
+  "catalog_columns": [
+    "编号",
+    "用例",
+    "主参与者",
+    "入口面",
+    "优先级",
+    "说明"
+  ],
+  "actors": [
+    {
+      "id": "skill-user",
+      "label": "技能使用者/架构师"
+    },
+    {
+      "id": "maintainer",
+      "label": "技能维护者"
+    },
+    {
+      "id": "agent-runtime",
+      "label": "AI/子Agent运行时"
+    }
+  ],
+  "use_cases": [
+    {
+      "id": "uc-generate-architecture",
+      "code": "UC01",
+      "label": "生成架构图",
+      "primary_actor": "skill-user",
+      "secondary_actors": [
+        "agent-runtime"
+      ],
+      "entry_surfaces": [
+        "Claude Code 聊天触发词",
+        "自然语言系统描述",
+        "兼容运行时默认提示词"
+      ],
+      "priority": "P0",
+      "summary": "把系统描述转成架构图、微服务图或其他结构化技术图。"
+    },
+    {
+      "id": "uc-generate-process-sequence",
+      "code": "UC02",
+      "label": "生成流程时序图",
+      "primary_actor": "skill-user",
+      "secondary_actors": [
+        "agent-runtime"
+      ],
+      "entry_surfaces": [
+        "Claude Code 聊天触发词",
+        "自然语言流程描述",
+        "自然语言时序描述"
+      ],
+      "priority": "P0",
+      "summary": "把业务流程、决策流和时序交互转成流程图、序列图或状态类图。"
+    },
+    {
+      "id": "uc-generate-ai-agent-diagram",
+      "code": "UC03",
+      "label": "生成 AI/Agent 图",
+      "primary_actor": "skill-user",
+      "secondary_actors": [
+        "agent-runtime"
+      ],
+      "entry_surfaces": [
+        "Claude Code 聊天触发词",
+        "AI/Agent 场景描述",
+        "兼容运行时默认提示词"
+      ],
+      "priority": "P0",
+      "summary": "围绕 RAG、Agentic Search、Mem0、多 Agent、Tool Call 等模式出图。"
+    },
+    {
+      "id": "uc-generate-uml",
+      "code": "UC04",
+      "label": "生成 UML 图",
+      "primary_actor": "skill-user",
+      "secondary_actors": [
+        "agent-runtime"
+      ],
+      "entry_surfaces": [
+        "Claude Code 聊天触发词",
+        "UML 场景描述",
+        "模板 `use-case.svg` 等内置模板"
+      ],
+      "priority": "P0",
+      "summary": "为类图、组件图、用例图、ER 图等标准 UML 或结构图生成 SVG 与 PNG。"
+    },
+    {
+      "id": "uc-generate-comparison-concept",
+      "code": "UC05",
+      "label": "生成对比概念图",
+      "primary_actor": "skill-user",
+      "secondary_actors": [
+        "agent-runtime"
+      ],
+      "entry_surfaces": [
+        "Claude Code 聊天触发词",
+        "技术比较描述",
+        "概念/能力地图描述"
+      ],
+      "priority": "P0",
+      "summary": "把方案对比、技术栈关系和能力地图可视化为矩阵或概念图。"
+    },
+    {
+      "id": "uc-install-upgrade-skill",
+      "code": "UC11",
+      "label": "安装升级 Skill",
+      "primary_actor": "skill-user",
+      "secondary_actors": [],
+      "entry_surfaces": [
+        "`npx skills add`",
+        "`npx skills add --force -g -y`",
+        "GitHub 仓库克隆"
+      ],
+      "priority": "P1",
+      "summary": "安装或升级 skill，使出图能力与参考资源可被本地运行时使用。"
+    },
+    {
+      "id": "uc-configure-style-output",
+      "code": "UC12",
+      "label": "配置风格输出",
+      "primary_actor": "skill-user",
+      "secondary_actors": [],
+      "entry_surfaces": [
+        "聊天中的风格说明",
+        "`--output` 输出路径",
+        "脚本参数 `-s/-o/-w`"
+      ],
+      "priority": "P1",
+      "summary": "为图表选择 7 种视觉风格、输出路径和 PNG 宽度，以适配目标文档或发布场景。"
+    },
+    {
+      "id": "uc-generate-from-template",
+      "code": "UC13",
+      "label": "模板生成 SVG",
+      "primary_actor": "skill-user",
+      "secondary_actors": [],
+      "entry_surfaces": [
+        "`scripts/generate-from-template.py`",
+        "内置 `templates/*.svg`",
+        "JSON 结构输入"
+      ],
+      "priority": "P1",
+      "summary": "基于模板、风格配置和结构化 JSON 稳定生成起始 SVG。"
+    },
+    {
+      "id": "uc-validate-export",
+      "code": "UC14",
+      "label": "校验导出 PNG",
+      "primary_actor": "skill-user",
+      "secondary_actors": [],
+      "entry_surfaces": [
+        "`scripts/validate-svg.sh`",
+        "`scripts/generate-diagram.sh`",
+        "`rsvg-convert`"
+      ],
+      "priority": "P1",
+      "summary": "验证现有 SVG 的语法与渲染兼容性，并导出高分辨率 PNG。"
+    },
+    {
+      "id": "uc-regression-test-styles",
+      "code": "UC21",
+      "label": "批量回归测试",
+      "primary_actor": "maintainer",
+      "secondary_actors": [],
+      "entry_surfaces": [
+        "`scripts/test-all-styles.sh`",
+        "`fixtures/*.json`",
+        "`test-output/`"
+      ],
+      "priority": "P2",
+      "summary": "批量渲染回归样例、验证 SVG 并导出 PNG，检查 7 种风格是否稳定。"
+    },
+    {
+      "id": "uc-extend-governance",
+      "code": "UC22",
+      "label": "扩展治理规则",
+      "primary_actor": "maintainer",
+      "secondary_actors": [],
+      "entry_surfaces": [
+        "`scripts/README.md` 开发说明",
+        "`generate-diagram.sh`",
+        "`validate-svg.sh`"
+      ],
+      "priority": "P2",
+      "summary": "扩展支持的图表类型、增加 SVG 校验规则，并维护生成与验证规范。"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-repo-value",
+      "path": "README.zh.md",
+      "lines": "5,15",
+      "reason": "仓库价值主张是用中文或自然语言描述系统并得到 SVG + PNG 技术图。"
+    },
+    {
+      "id": "ev-capability-scope",
+      "path": "README.zh.md",
+      "lines": "123-131",
+      "reason": "明确列出 7 种风格、14 种图类型、AI/Agent 领域图与 SVG/PNG 双输出。"
+    },
+    {
+      "id": "ev-install-upgrade",
+      "path": "README.zh.md",
+      "lines": "139-153",
+      "reason": "公开给用户的安装与升级入口。"
+    },
+    {
+      "id": "ev-basic-usage",
+      "path": "README.zh.md",
+      "lines": "195-215",
+      "reason": "展示聊天式出图、指定风格与指定输出路径等入口面。"
+    },
+    {
+      "id": "ev-scenario-examples",
+      "path": "README.zh.md",
+      "lines": "256-302",
+      "reason": "给出微服务架构、OAuth2 序列图、对比图、AI Agent 能力地图等典型用户目标。"
+    },
+    {
+      "id": "ev-skill-scripts",
+      "path": "SKILL.md",
+      "lines": "41-69",
+      "reason": "主 skill 将 generate-diagram、generate-from-template、validate-svg、test-all-styles 作为推荐辅助脚本。"
+    },
+    {
+      "id": "ev-skill-uml",
+      "path": "SKILL.md",
+      "lines": "186-198",
+      "reason": "skill 明确内建 Use Case Diagram 等 UML 图类型能力。"
+    },
+    {
+      "id": "ev-script-validate-export",
+      "path": "scripts/README.md",
+      "lines": "7-52,165-170",
+      "reason": "公开说明 validate-svg 与 generate-diagram 的用户用法，以及“生成并验证图表”场景。"
+    },
+    {
+      "id": "ev-script-template",
+      "path": "scripts/README.md",
+      "lines": "57-95",
+      "reason": "公开说明 generate-from-template.py 用于基于风格配置和 JSON 数据生成 SVG。"
+    },
+    {
+      "id": "ev-script-regression",
+      "path": "scripts/README.md",
+      "lines": "97-108,173-183",
+      "reason": "公开说明 test-all-styles.sh 渲染 fixtures、验证 SVG、导出 PNG 并产出测试报告。"
+    },
+    {
+      "id": "ev-script-governance",
+      "path": "scripts/README.md",
+      "lines": "216-233",
+      "reason": "开发说明允许维护者新增验证规则与扩展支持的图表类型。"
+    },
+    {
+      "id": "ev-agent-runtime",
+      "path": "agents/openai.yaml",
+      "lines": "1-4",
+      "reason": "仓库显式提供兼容运行时接口元数据，证明存在面向 Agent/子Agent 的集成入口。"
+    },
+    {
+      "id": "ev-package-scope",
+      "path": "package.json",
+      "lines": "2-5,28-37",
+      "reason": "包元数据再次确认仓库作为 skill 发布，且公开包含 README、references、scripts、fixtures、templates、assets。"
+    }
+  ]
+}

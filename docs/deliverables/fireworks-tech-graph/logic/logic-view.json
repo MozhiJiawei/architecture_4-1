@@ -1,0 +1,491 @@
+{
+  "view": "logic",
+  "title": "fireworks-tech-graph 逻辑视图",
+  "summary": "该仓库是一个把自然语言系统描述转成技术图的 skill 产品。其稳定结构由技能入口与图类型规划、模板化 SVG 生成、样式与图标知识资产、验证导出工具链，以及宿主运行时和 rsvg-convert 等外部依赖组成。",
+  "layout_suggestion": {
+    "strategy": "stacked-groups"
+  },
+  "groups": [
+    {
+      "id": "entry",
+      "label": "入口与宿主",
+      "layout_hint": {
+        "order": 1
+      }
+    },
+    {
+      "id": "orchestration",
+      "label": "技能编排",
+      "layout_hint": {
+        "order": 2
+      }
+    },
+    {
+      "id": "generation",
+      "label": "生成与交付",
+      "layout_hint": {
+        "order": 3
+      }
+    },
+    {
+      "id": "assets_quality",
+      "label": "知识资产与质量保障",
+      "layout_hint": {
+        "order": 4
+      }
+    },
+    {
+      "id": "external_tools",
+      "label": "外部工具",
+      "layout_hint": {
+        "order": 5
+      }
+    }
+  ],
+  "elements": [
+    {
+      "id": "caller",
+      "label": "调用方",
+      "type": "external",
+      "group": "entry",
+      "evidence_ids": [
+        "ev-readme-nl-to-diagram",
+        "ev-agent-default-prompt"
+      ]
+    },
+    {
+      "id": "runtime_host",
+      "label": "技能宿主",
+      "type": "external",
+      "group": "entry",
+      "evidence_ids": [
+        "ev-agent-default-prompt",
+        "ev-agent-interface"
+      ]
+    },
+    {
+      "id": "skill_entry",
+      "label": "Skill 入口",
+      "type": "interface",
+      "group": "orchestration",
+      "evidence_ids": [
+        "ev-package-main-skill",
+        "ev-skill-overview",
+        "ev-readme-trigger"
+      ]
+    },
+    {
+      "id": "diagram_planner",
+      "label": "图结构规划",
+      "type": "orchestrator",
+      "group": "orchestration",
+      "evidence_ids": [
+        "ev-skill-workflow",
+        "ev-skill-extract-structure",
+        "ev-skill-shape-vocab"
+      ]
+    },
+    {
+      "id": "svg_generator",
+      "label": "SVG 生成器",
+      "type": "service",
+      "group": "generation",
+      "evidence_ids": [
+        "ev-generator-style-driven",
+        "ev-scripts-json-to-svg",
+        "ev-generator-build-svg"
+      ]
+    },
+    {
+      "id": "export_pipeline",
+      "label": "验证与导出",
+      "type": "component",
+      "group": "generation",
+      "evidence_ids": [
+        "ev-generate-diagram-validate-export",
+        "ev-validate-svg-checks",
+        "ev-skill-export-png"
+      ]
+    },
+    {
+      "id": "style_knowledge",
+      "label": "风格与图谱知识",
+      "type": "subsystem",
+      "group": "assets_quality",
+      "evidence_ids": [
+        "ev-readme-styles-types",
+        "ev-readme-shape-arrow",
+        "ev-skill-load-style-icons"
+      ]
+    },
+    {
+      "id": "template_library",
+      "label": "模板库",
+      "type": "subsystem",
+      "group": "assets_quality",
+      "evidence_ids": [
+        "ev-generator-template-dir",
+        "ev-package-files",
+        "ev-templates-list"
+      ]
+    },
+    {
+      "id": "regression_harness",
+      "label": "回归样例与批测",
+      "type": "subsystem",
+      "group": "assets_quality",
+      "evidence_ids": [
+        "ev-scripts-batch-test",
+        "ev-test-fixtures",
+        "ev-scripts-read-fixtures"
+      ]
+    },
+    {
+      "id": "rsvg_convert",
+      "label": "rsvg-convert",
+      "type": "external",
+      "group": "external_tools",
+      "evidence_ids": [
+        "ev-readme-nl-to-diagram",
+        "ev-generate-diagram-rsvg",
+        "ev-validate-svg-rsvg"
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "source": "caller",
+      "target": "runtime_host",
+      "label": "提交系统或流程描述",
+      "kind": "sync",
+      "inferred": true,
+      "evidence_ids": [
+        "ev-agent-default-prompt",
+        "ev-readme-nl-to-diagram"
+      ]
+    },
+    {
+      "source": "runtime_host",
+      "target": "skill_entry",
+      "label": "装载并触发 skill",
+      "kind": "sync",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-agent-interface",
+        "ev-package-main-skill"
+      ]
+    },
+    {
+      "source": "skill_entry",
+      "target": "diagram_planner",
+      "label": "分类并抽取图结构",
+      "kind": "sync",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-skill-workflow",
+        "ev-skill-extract-structure"
+      ]
+    },
+    {
+      "source": "diagram_planner",
+      "target": "style_knowledge",
+      "label": "加载风格、图标与语义规则",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-skill-load-style-icons",
+        "ev-readme-shape-arrow"
+      ]
+    },
+    {
+      "source": "diagram_planner",
+      "target": "template_library",
+      "label": "选择图类型模板",
+      "kind": "dependency",
+      "inferred": true,
+      "evidence_ids": [
+        "ev-skill-workflow",
+        "ev-generator-template-dir",
+        "ev-templates-list"
+      ]
+    },
+    {
+      "source": "diagram_planner",
+      "target": "svg_generator",
+      "label": "提交 containers/nodes/arrows",
+      "kind": "sync",
+      "inferred": true,
+      "evidence_ids": [
+        "ev-scripts-json-to-svg",
+        "ev-generator-build-svg"
+      ]
+    },
+    {
+      "source": "svg_generator",
+      "target": "style_knowledge",
+      "label": "应用风格配置",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-generator-style-profiles",
+        "ev-scripts-json-to-svg"
+      ]
+    },
+    {
+      "source": "svg_generator",
+      "target": "template_library",
+      "label": "读取 SVG 模板",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-generator-template-dir",
+        "ev-generator-template-viewbox"
+      ]
+    },
+    {
+      "source": "svg_generator",
+      "target": "export_pipeline",
+      "label": "产出待校验 SVG",
+      "kind": "state",
+      "inferred": true,
+      "evidence_ids": [
+        "ev-generator-write-output",
+        "ev-generate-diagram-validate-export"
+      ]
+    },
+    {
+      "source": "regression_harness",
+      "target": "svg_generator",
+      "label": "按 fixture 渲染样例",
+      "kind": "sync",
+      "render": false,
+      "inferred": false,
+      "evidence_ids": [
+        "ev-test-call-generator",
+        "ev-test-fixtures"
+      ]
+    },
+    {
+      "source": "regression_harness",
+      "target": "export_pipeline",
+      "label": "批量验证并导出",
+      "kind": "sync",
+      "render": false,
+      "inferred": false,
+      "evidence_ids": [
+        "ev-test-call-validator",
+        "ev-scripts-batch-test"
+      ]
+    },
+    {
+      "source": "export_pipeline",
+      "target": "rsvg_convert",
+      "label": "校验语法并导出 PNG",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-skill-export-png",
+        "ev-generate-diagram-rsvg",
+        "ev-validate-svg-rsvg"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-readme-nl-to-diagram",
+      "path": "README.zh.md",
+      "lines": "15-15",
+      "reason": "README 将产品定义为把自然语言描述转成 SVG 技术图，并通过 rsvg-convert 导出 PNG。"
+    },
+    {
+      "id": "ev-readme-styles-types",
+      "path": "README.zh.md",
+      "lines": "123-125",
+      "reason": "README 明确仓库内置 7 种视觉风格并支持 14 种图类型。"
+    },
+    {
+      "id": "ev-readme-trigger",
+      "path": "README.zh.md",
+      "lines": "183-189",
+      "reason": "README 列出触发词，说明仓库以 skill 入口对话式触发。"
+    },
+    {
+      "id": "ev-readme-shape-arrow",
+      "path": "README.zh.md",
+      "lines": "405-438",
+      "reason": "README 提供形状词汇表和箭头语义，构成图结构规划与风格知识的一部分。"
+    },
+    {
+      "id": "ev-agent-interface",
+      "path": "agents/openai.yaml",
+      "lines": "1-4",
+      "reason": "agent 元数据把仓库暴露为兼容运行时可调用的接口。"
+    },
+    {
+      "id": "ev-agent-default-prompt",
+      "path": "agents/openai.yaml",
+      "lines": "3-4",
+      "reason": "default_prompt 说明宿主会把用户的系统或流程描述转成图并导出 PNG。"
+    },
+    {
+      "id": "ev-package-main-skill",
+      "path": "package.json",
+      "lines": "4-5",
+      "reason": "包入口 main 指向 SKILL.md，说明核心入口是 skill 文档而非独立应用二进制。"
+    },
+    {
+      "id": "ev-package-files",
+      "path": "package.json",
+      "lines": "28-36",
+      "reason": "发布内容显式包含 references、scripts、fixtures、templates、assets 等资产目录。"
+    },
+    {
+      "id": "ev-skill-overview",
+      "path": "SKILL.md",
+      "lines": "13-13",
+      "reason": "SKILL.md 将自身定义为导出 SVG/PNG 技术图的主 skill。"
+    },
+    {
+      "id": "ev-skill-workflow",
+      "path": "SKILL.md",
+      "lines": "85-96",
+      "reason": "工作流规定先分类、抽取结构、规划布局、加载风格，再验证并导出。"
+    },
+    {
+      "id": "ev-skill-extract-structure",
+      "path": "SKILL.md",
+      "lines": "87-92",
+      "reason": "Skill 将 classify、extract structure、map nodes to shapes 作为核心职责。"
+    },
+    {
+      "id": "ev-skill-load-style-icons",
+      "path": "SKILL.md",
+      "lines": "90-92",
+      "reason": "Skill 明确要求加载 style reference 和 icons reference。"
+    },
+    {
+      "id": "ev-skill-shape-vocab",
+      "path": "SKILL.md",
+      "lines": "270-315",
+      "reason": "Shape Vocabulary 与 Arrow Semantics 定义了结构化图元语义。"
+    },
+    {
+      "id": "ev-skill-export-png",
+      "path": "SKILL.md",
+      "lines": "94-95",
+      "reason": "Skill 规定使用 rsvg-convert 做语法验证和 PNG 导出。"
+    },
+    {
+      "id": "ev-scripts-json-to-svg",
+      "path": "scripts/README.md",
+      "lines": "59-78",
+      "reason": "scripts README 说明 generate-from-template.py 接收 style、containers、nodes、arrows 等 JSON 结构来生成 SVG。"
+    },
+    {
+      "id": "ev-scripts-batch-test",
+      "path": "scripts/README.md",
+      "lines": "99-118",
+      "reason": "scripts README 把 test-all-styles.sh 定义为回归样例批量测试脚本。"
+    },
+    {
+      "id": "ev-scripts-read-fixtures",
+      "path": "scripts/README.md",
+      "lines": "179-183",
+      "reason": "文档说明批量测试会读取 fixtures、调用生成器、再执行验证。"
+    },
+    {
+      "id": "ev-generator-style-driven",
+      "path": "scripts/generate-from-template.py",
+      "lines": "1-8",
+      "reason": "生成器脚本自述为 style-driven SVG diagram generator。"
+    },
+    {
+      "id": "ev-generator-template-dir",
+      "path": "scripts/generate-from-template.py",
+      "lines": "29-29",
+      "reason": "生成器显式从 ../templates 目录加载模板。"
+    },
+    {
+      "id": "ev-generator-template-viewbox",
+      "path": "scripts/generate-from-template.py",
+      "lines": "404-410",
+      "reason": "parse_template_viewbox 根据模板文件决定画布尺寸，证明模板库参与生成。"
+    },
+    {
+      "id": "ev-generator-style-profiles",
+      "path": "scripts/generate-from-template.py",
+      "lines": "69-386",
+      "reason": "STYLE_PROFILES 内置 1-7 号风格配置，证明风格逻辑被编码进生成器。"
+    },
+    {
+      "id": "ev-generator-build-svg",
+      "path": "scripts/generate-from-template.py",
+      "lines": "1435-1525",
+      "reason": "build_svg 汇聚容器、节点、箭头、图例并组装最终 SVG。"
+    },
+    {
+      "id": "ev-generator-write-output",
+      "path": "scripts/generate-from-template.py",
+      "lines": "1537-1539",
+      "reason": "生成器把 build_svg 的结果写到指定 output_path。"
+    },
+    {
+      "id": "ev-generate-diagram-validate-export",
+      "path": "scripts/generate-diagram.sh",
+      "lines": "120-153",
+      "reason": "generate-diagram.sh 负责 SVG 验证与 PNG 导出，不负责生成内容本身。"
+    },
+    {
+      "id": "ev-generate-diagram-rsvg",
+      "path": "scripts/generate-diagram.sh",
+      "lines": "139-148",
+      "reason": "导出脚本直接调用 rsvg-convert 完成 PNG 输出。"
+    },
+    {
+      "id": "ev-validate-svg-checks",
+      "path": "scripts/validate-svg.sh",
+      "lines": "2-282",
+      "reason": "validate-svg.sh 负责 XML、标签、marker、箭头碰撞和 rsvg-convert 校验。"
+    },
+    {
+      "id": "ev-validate-svg-rsvg",
+      "path": "scripts/validate-svg.sh",
+      "lines": "269-278",
+      "reason": "验证脚本把 rsvg-convert 作为最终可渲染性检查。"
+    },
+    {
+      "id": "ev-test-fixtures",
+      "path": "fixtures/microservices-style3.json",
+      "lines": "1-95",
+      "reason": "fixtures 目录中的样例 JSON 直接提供模板类型、风格、节点、箭头等回归输入结构。"
+    },
+    {
+      "id": "ev-test-call-generator",
+      "path": "scripts/test-all-styles.sh",
+      "lines": "84-103",
+      "reason": "批测脚本对每个 fixture 调用 generate-from-template.py 并产出 SVG/PNG。"
+    },
+    {
+      "id": "ev-test-call-validator",
+      "path": "scripts/test-all-styles.sh",
+      "lines": "100-114",
+      "reason": "批测脚本在渲染后调用 validate-svg.sh，并在可用时导出 PNG。"
+    },
+    {
+      "id": "ev-templates-list",
+      "path": "templates/architecture.svg",
+      "lines": "1-12",
+      "reason": "templates 目录中存在可复用的图类型模板文件，architecture.svg 可代表这一类资产。"
+    }
+  ],
+  "uncertainties": [
+    "“图结构规划”主要由 SKILL.md 的工作流和术语约束体现，仓库中没有与之完全一一对应的独立源码模块，因此它与 SVG 生成器之间的数据交接被标记为 inferred:true。",
+    "“调用方 -> 技能宿主”的关系来自 agent 元数据和 README 对自然语言输入的描述；具体宿主实现不在仓库内，因此该外部交互边界是推断关系。",
+    "README 声称覆盖 14 种 UML 图类型，但 templates 目录只显式列出部分模板文件；其余类型可能由生成器内置布局或命名映射补足，仓库内证据不足以完全拆开。"
+  ],
+  "omissions": [
+    "未把 assets/samples、agentloop-core.svg、.gitignore、.npmignore 等静态展示或发布元数据建模为逻辑元素。",
+    "未把单个 style-*.md、icons.md、每个 fixture 文件分别画成节点，而是合并为知识资产与回归样例两个稳定职责。",
+    "未把 validate-svg.sh 内部的每一项检查规则拆成独立组件，因为它们共同构成一个验证职责。"
+  ]
+}

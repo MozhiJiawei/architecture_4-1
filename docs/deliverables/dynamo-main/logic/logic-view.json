@@ -1,0 +1,525 @@
+{
+  "view": "logic",
+  "title": "UC06 快速启动副本 - 逻辑视图",
+  "summary": "围绕“快速启动副本”，Dynamo 通过部署编排、模型供给加速、Snapshot/Checkpoint 恢复与前端模型引导四类稳定职责，缩短模型下载、权重装载和副本恢复时间，让新副本更快进入可服务状态。",
+  "scope": "仅覆盖 Dynamo 仓库中 UC06“快速启动副本”相关的稳定职责边界；不展开其他推理、路由、规划、故障转移或全仓库总架构。",
+  "style_profile": "ref-default",
+  "layout_suggestion": {
+    "strategy": "stacked-groups"
+  },
+  "groups": [
+    {
+      "id": "entry",
+      "label": "部署入口与编排",
+      "style": {
+        "fillColor": "#e6eef8",
+        "strokeColor": "#7f9fc7",
+        "fontColor": "#1f2937"
+      },
+      "layout_hint": {
+        "order": 1
+      }
+    },
+    {
+      "id": "supply",
+      "label": "模型供给与缓存",
+      "style": {
+        "fillColor": "#eaf2ea",
+        "strokeColor": "#8ca98c",
+        "fontColor": "#1f2937"
+      },
+      "layout_hint": {
+        "order": 2
+      }
+    },
+    {
+      "id": "restore",
+      "label": "快照与检查点恢复",
+      "style": {
+        "fillColor": "#ece8f2",
+        "strokeColor": "#9a8bb0",
+        "fontColor": "#1f2937"
+      },
+      "layout_hint": {
+        "order": 3
+      }
+    },
+    {
+      "id": "readiness",
+      "label": "副本可服务化",
+      "style": {
+        "fillColor": "#f8f9fa",
+        "strokeColor": "#6c757d",
+        "fontColor": "#1f2937"
+      },
+      "layout_hint": {
+        "order": 4
+      }
+    }
+  ],
+  "elements": [
+    {
+      "id": "deployment_spec",
+      "label": "部署声明",
+      "type": "interface",
+      "group": "entry",
+      "style": {
+        "fillColor": "#e6eef8",
+        "strokeColor": "#7f9fc7",
+        "fontColor": "#1f2937"
+      },
+      "evidence_ids": [
+        "ev-readme-fast-start",
+        "ev-checkpoint-config",
+        "ev-model-cache-spec"
+      ]
+    },
+    {
+      "id": "startup_orchestrator",
+      "label": "启动编排器",
+      "type": "orchestrator",
+      "group": "entry",
+      "style": {
+        "fillColor": "#e6eef8",
+        "strokeColor": "#7f9fc7",
+        "fontColor": "#1f2937"
+      },
+      "evidence_ids": [
+        "ev-model-express-inject",
+        "ev-model-cache-mount",
+        "ev-checkpoint-auto"
+      ]
+    },
+    {
+      "id": "shared_model_cache",
+      "label": "共享模型缓存",
+      "type": "cache",
+      "group": "supply",
+      "style": {
+        "fillColor": "#eaf2ea",
+        "strokeColor": "#8ca98c",
+        "fontColor": "#1f2937"
+      },
+      "evidence_ids": [
+        "ev-model-cache-doc",
+        "ev-model-cache-spec",
+        "ev-model-cache-mount"
+      ]
+    },
+    {
+      "id": "model_express",
+      "label": "ModelExpress",
+      "type": "external",
+      "group": "supply",
+      "style": {
+        "fillColor": "#eaf2ea",
+        "strokeColor": "#8ca98c",
+        "fontColor": "#1f2937"
+      },
+      "evidence_ids": [
+        "ev-model-express-doc",
+        "ev-model-express-inject",
+        "ev-model-express-env"
+      ]
+    },
+    {
+      "id": "model_source",
+      "label": "模型源",
+      "type": "external",
+      "group": "supply",
+      "style": {
+        "fillColor": "#f8f9fa",
+        "strokeColor": "#6c757d",
+        "fontColor": "#1f2937"
+      },
+      "evidence_ids": [
+        "ev-model-cache-download",
+        "ev-front-bootstrap"
+      ]
+    },
+    {
+      "id": "checkpoint_catalog",
+      "label": "Checkpoint 编目",
+      "type": "component",
+      "group": "restore",
+      "style": {
+        "fillColor": "#ece8f2",
+        "strokeColor": "#9a8bb0",
+        "fontColor": "#1f2937"
+      },
+      "evidence_ids": [
+        "ev-checkpoint-config",
+        "ev-checkpoint-cr",
+        "ev-snapshot-auto-doc"
+      ]
+    },
+    {
+      "id": "snapshot_volume",
+      "label": "快照卷",
+      "type": "database",
+      "group": "restore",
+      "style": {
+        "fillColor": "#f8f9fa",
+        "strokeColor": "#6c757d",
+        "fontColor": "#1f2937"
+      },
+      "evidence_ids": [
+        "ev-snapshot-storage",
+        "ev-snapshot-doc"
+      ]
+    },
+    {
+      "id": "snapshot_restore",
+      "label": "Snapshot 恢复",
+      "type": "subsystem",
+      "group": "restore",
+      "style": {
+        "fillColor": "#ece8f2",
+        "strokeColor": "#9a8bb0",
+        "fontColor": "#1f2937"
+      },
+      "evidence_ids": [
+        "ev-snapshot-doc",
+        "ev-snapshot-lifecycle",
+        "ev-snapshot-restore-target"
+      ]
+    },
+    {
+      "id": "serving_replica",
+      "label": "推理副本",
+      "type": "service",
+      "group": "readiness",
+      "style": {
+        "fillColor": "#eaf2ea",
+        "strokeColor": "#8ca98c",
+        "fontColor": "#1f2937"
+      },
+      "evidence_ids": [
+        "ev-backend-worker",
+        "ev-snapshot-restore-target",
+        "ev-model-express-doc"
+      ]
+    },
+    {
+      "id": "frontend_bootstrap",
+      "label": "前端引导",
+      "type": "component",
+      "group": "readiness",
+      "style": {
+        "fillColor": "#f8f9fa",
+        "strokeColor": "#6c757d",
+        "fontColor": "#1f2937"
+      },
+      "evidence_ids": [
+        "ev-front-bootstrap",
+        "ev-front-register"
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "source": "deployment_spec",
+      "target": "startup_orchestrator",
+      "label": "提交",
+      "kind": "dependency",
+      "inferred": true,
+      "evidence_ids": [
+        "ev-checkpoint-config",
+        "ev-model-cache-spec"
+      ]
+    },
+    {
+      "source": "startup_orchestrator",
+      "target": "shared_model_cache",
+      "label": "挂载",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-model-cache-mount",
+        "ev-model-cache-spec"
+      ]
+    },
+    {
+      "source": "startup_orchestrator",
+      "target": "model_express",
+      "label": "注入",
+      "kind": "dependency",
+      "render": false,
+      "inferred": false,
+      "evidence_ids": [
+        "ev-model-express-inject",
+        "ev-model-express-doc"
+      ]
+    },
+    {
+      "source": "startup_orchestrator",
+      "target": "checkpoint_catalog",
+      "label": "创建/复用",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-checkpoint-auto",
+        "ev-checkpoint-config",
+        "ev-snapshot-auto-doc"
+      ]
+    },
+    {
+      "source": "startup_orchestrator",
+      "target": "serving_replica",
+      "label": "部署",
+      "kind": "dependency",
+      "inferred": true,
+      "evidence_ids": [
+        "ev-snapshot-restore-target",
+        "ev-model-cache-doc"
+      ]
+    },
+    {
+      "source": "shared_model_cache",
+      "target": "model_source",
+      "label": "缓存",
+      "kind": "cache",
+      "render": false,
+      "inferred": false,
+      "evidence_ids": [
+        "ev-model-cache-download",
+        "ev-model-cache-doc"
+      ]
+    },
+    {
+      "source": "model_express",
+      "target": "model_source",
+      "label": "下载",
+      "kind": "dependency",
+      "render": false,
+      "inferred": false,
+      "evidence_ids": [
+        "ev-model-express-doc"
+      ]
+    },
+    {
+      "source": "checkpoint_catalog",
+      "target": "snapshot_volume",
+      "label": "索引",
+      "kind": "state",
+      "inferred": true,
+      "evidence_ids": [
+        "ev-checkpoint-cr",
+        "ev-snapshot-doc",
+        "ev-snapshot-storage"
+      ]
+    },
+    {
+      "source": "snapshot_restore",
+      "target": "checkpoint_catalog",
+      "label": "查找",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-snapshot-restore-target",
+        "ev-snapshot-auto-doc"
+      ]
+    },
+    {
+      "source": "snapshot_restore",
+      "target": "snapshot_volume",
+      "label": "读取",
+      "kind": "state",
+      "render": false,
+      "inferred": false,
+      "evidence_ids": [
+        "ev-snapshot-doc",
+        "ev-snapshot-storage"
+      ]
+    },
+    {
+      "source": "snapshot_restore",
+      "target": "serving_replica",
+      "label": "恢复",
+      "kind": "state",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-snapshot-lifecycle",
+        "ev-snapshot-restore-target"
+      ]
+    },
+    {
+      "source": "shared_model_cache",
+      "target": "serving_replica",
+      "label": "供给",
+      "kind": "cache",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-model-cache-doc"
+      ]
+    },
+    {
+      "source": "model_express",
+      "target": "serving_replica",
+      "label": "分发",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-model-express-doc"
+      ]
+    },
+    {
+      "source": "model_source",
+      "target": "frontend_bootstrap",
+      "label": "配置拉取",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-front-bootstrap"
+      ]
+    },
+    {
+      "source": "shared_model_cache",
+      "target": "frontend_bootstrap",
+      "label": "配置复用",
+      "kind": "cache",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-model-cache-doc",
+        "ev-front-bootstrap"
+      ]
+    },
+    {
+      "source": "serving_replica",
+      "target": "frontend_bootstrap",
+      "label": "注册",
+      "kind": "sync",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-front-register",
+        "ev-backend-worker"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-readme-fast-start",
+      "path": "README.md",
+      "lines": "35-42,86-86",
+      "reason": "README 将快速冷启动列为典型使用场景，并把 ModelExpress 说明为面向新副本冷启动加速的能力。"
+    },
+    {
+      "id": "ev-model-cache-doc",
+      "path": "docs/kubernetes/model-caching.md",
+      "lines": "8-14,74-92",
+      "reason": "模型缓存文档说明通过共享 PVC 只下载一次模型，并可同时供 worker 与 frontend 复用。"
+    },
+    {
+      "id": "ev-model-cache-download",
+      "path": "docs/kubernetes/model-caching.md",
+      "lines": "35-72",
+      "reason": "下载 Job 将 Hugging Face 模型内容拉到共享 PVC，形成缓存预热入口。"
+    },
+    {
+      "id": "ev-model-cache-spec",
+      "path": "deploy/operator/api/v1beta1/dynamographdeploymentrequest_types.go",
+      "lines": "257-272",
+      "reason": "DGDR v1beta1 通过 ModelCacheSpec 暴露 PVC 名称、模型路径和挂载路径，说明模型缓存是正式编排能力。"
+    },
+    {
+      "id": "ev-model-cache-mount",
+      "path": "deploy/operator/internal/controller/dynamographdeploymentrequest_controller.go",
+      "lines": "1229-1238,1503-1513",
+      "reason": "controller 读取 model cache 配置并把 PVC 以只读方式挂到生成的 Job/Pod，落实共享缓存职责。"
+    },
+    {
+      "id": "ev-model-express-doc",
+      "path": "docs/kubernetes/model-caching.md",
+      "lines": "114-145",
+      "reason": "文档将 ModelExpress 定义为 P2P 模型分发服务，下载一次后经网络向所有 pod 分发权重，并通过 mx-source/mx-target 接入 worker 加载链路。"
+    },
+    {
+      "id": "ev-model-express-inject",
+      "path": "deploy/operator/internal/dynamo/graph.go",
+      "lines": "953-957",
+      "reason": "operator 在平台配置了 ModelExpress URL 时，自动向组件 pod 注入 MODEL_EXPRESS_URL。"
+    },
+    {
+      "id": "ev-model-express-env",
+      "path": "lib/runtime/src/config/environment_names.rs",
+      "lines": "317-324",
+      "reason": "运行时将 MODEL_EXPRESS_URL 作为正式模型加载环境变量常量管理。"
+    },
+    {
+      "id": "ev-front-bootstrap",
+      "path": "docs/components/frontend/README.md",
+      "lines": "44-50",
+      "reason": "frontend 负责预处理/后处理，需要 config/tokenizer 等模型配置文件；这些文件可直接从 Hugging Face 下载，也建议通过共享目录复用。"
+    },
+    {
+      "id": "ev-front-register",
+      "path": "docs/components/frontend/README.md",
+      "lines": "44-45",
+      "reason": "frontend 在 worker 调用 register_model 后自动发现后端模型，构成新副本进入服务面的关键接点。"
+    },
+    {
+      "id": "ev-backend-worker",
+      "path": "components/src/dynamo/common/backend/README.md",
+      "lines": "25-30",
+      "reason": "统一 backend worker 的职责包含启动引擎后注册模型并对外提供 generate endpoint。"
+    },
+    {
+      "id": "ev-checkpoint-config",
+      "path": "deploy/operator/api/v1alpha1/common.go",
+      "lines": "233-256",
+      "reason": "服务级 checkpoint 配置要求在启用时显式指定 checkpointRef 或 identity，说明恢复路径由编排层声明控制。"
+    },
+    {
+      "id": "ev-checkpoint-cr",
+      "path": "deploy/operator/api/v1alpha1/dynamocheckpoint_types.go",
+      "lines": "121-157",
+      "reason": "DynamoCheckpoint CR 以 identity、job 和 status.phase/identityHash 表达检查点编目与生命周期。"
+    },
+    {
+      "id": "ev-checkpoint-auto",
+      "path": "deploy/operator/internal/controller/dynamographdeployment_controller.go",
+      "lines": "1341-1354",
+      "reason": "DGD controller 在 Auto 模式且未显式给 checkpointRef 时，会创建或复用 DynamoCheckpoint。"
+    },
+    {
+      "id": "ev-snapshot-doc",
+      "path": "docs/kubernetes/snapshot.md",
+      "lines": "7-20,29-35",
+      "reason": "Snapshot 文档给出快速启动的核心逻辑：先冷启动并做 checkpoint，再从现成 checkpoint 恢复后续 worker。"
+    },
+    {
+      "id": "ev-snapshot-storage",
+      "path": "docs/kubernetes/snapshot.md",
+      "lines": "96-107",
+      "reason": "Snapshot chart 通过共享 RWX PVC 提供 checkpoint 存储，支撑跨节点恢复。"
+    },
+    {
+      "id": "ev-snapshot-restore-target",
+      "path": "docs/kubernetes/snapshot.md",
+      "lines": "184-227",
+      "reason": "文档展示 Ready 的 DynamoCheckpoint 通过 checkpointRef 被 DGD 显式引用，worker 从现成 checkpoint 恢复而非重新冷启动；Auto 模式则可按 identity 自动查找/创建。"
+    },
+    {
+      "id": "ev-snapshot-auto-doc",
+      "path": "docs/kubernetes/snapshot.md",
+      "lines": "224-227",
+      "reason": "Auto 模式由 operator 计算 identity hash、查找等价 DynamoCheckpoint，并在缺失时后台创建。"
+    },
+    {
+      "id": "ev-snapshot-lifecycle",
+      "path": "components/src/dynamo/common/utils/snapshot.py",
+      "lines": "29-70,115-141",
+      "reason": "snapshot helper 在 worker 内部显式执行 quiesce、ready file、checkpoint/restore watcher 信号，以及 checkpoint 模式下的通信环境调整。"
+    }
+  ],
+  "uncertainties": [
+    "ModelExpress 主要实现位于外部仓库 ai-dynamo/modelexpress；本仓库只保留接入常量、operator 注入和文档，因此将其建模为 external。",
+    "frontend 是否直接从 ModelExpress 读取配置文件，在当前仓库证据中未被明确写实；模型供给到 frontend 的关系仅锚定到 Hugging Face 或共享 PVC。",
+    "Checkpoint 编目与快照卷之间的“索引”关系来自 CR/status 与文档流程合并推断，故标记为 inferred。"
+  ],
+  "omissions": [
+    "未展开 Planner、KV-aware routing、KVBM、故障迁移、LoRA、多模态等与 UC06 无直接必要关系的能力。",
+    "未细分具体后端实现（vLLM/SGLang/TRT-LLM）内部类或目录结构，因为它们不改变本用例下的稳定逻辑边界。",
+    "未建模 snapshot-agent、placeholder image、CRIU/cuda-checkpoint 为独立一层能力节点，以避免把逻辑视图退化为实现清单。"
+  ]
+}

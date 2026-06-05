@@ -1,0 +1,557 @@
+{
+  "view": "development",
+  "title": "fireworks-tech-graph 开发视图",
+  "summary": "围绕自然语言出图能力整理的开发/代码视图中间模型，突出技能入口、SVG 生成、视觉规范、模板资产与回归验证之间的维护边界。",
+  "description": "该仓库更像一个可发布的技能包，而不是传统应用。开发者主要维护 Skill 契约、模板生成器、导出校验脚本、风格/图标规范、模板库与回归样例。",
+  "scope": "聚焦 npm 包根及 agents、scripts、references、templates、fixtures、assets 中真正影响“描述系统并输出 SVG+PNG”能力的模块；不展开零散 shell 细节或每个 style/template 文件。",
+  "omissions": [
+    "不建模 node_modules、test-output、缓存、日志与未来生成产物。",
+    "不把每个 style markdown、每个模板 SVG、每张样例 PNG 分别升格为独立模块。",
+    "不拆解 generate-from-template.py 的内部绘图函数，以免开发视图退化为实现细节图。"
+  ],
+  "uncertainties": [
+    "assets/samples 与 fixtures 之间主要通过命名和展示用途对应，仓库内没有显式机器可读映射。",
+    "agents/openai.yaml 是否被所有兼容运行时消费，仓库内只有契约描述，没有统一适配测试。",
+    "package.json 的 files 白名单体现发布边界，但未提供单独的打包脚本来证明每个目录在发布流程中的实际消费频率。"
+  ],
+  "layout_suggestion": {
+    "strategy": "stacked-groups"
+  },
+  "style_profile": "ref-default",
+  "build_roots": [
+    "package.json",
+    "SKILL.md",
+    "agents/",
+    "scripts/",
+    "references/",
+    "templates/",
+    "fixtures/",
+    "assets/"
+  ],
+  "module_dependencies": [
+    {
+      "source": "package-surface",
+      "target": "skill-contract",
+      "dependency_type": "packaging",
+      "reason": "npm 包入口把 Skill 文档作为主入口暴露给安装后的使用者。",
+      "evidence_ids": ["ev-package-manifest", "ev-skill-workflow"]
+    },
+    {
+      "source": "skill-contract",
+      "target": "visual-specs",
+      "dependency_type": "workflow-contract",
+      "reason": "Skill 工作流要求按风格参考与图标参考组织输入和视觉语义。",
+      "evidence_ids": ["ev-skill-workflow", "ev-icons-reference"]
+    },
+    {
+      "source": "skill-contract",
+      "target": "template-generator",
+      "dependency_type": "workflow-contract",
+      "reason": "Skill 文档把模板生成器列为推荐起稿路径。",
+      "evidence_ids": ["ev-skill-scripts", "ev-generator-entry"]
+    },
+    {
+      "source": "skill-contract",
+      "target": "export-pipeline",
+      "dependency_type": "workflow-contract",
+      "reason": "Skill 文档要求在交付前执行校验与 PNG 导出。",
+      "evidence_ids": ["ev-skill-workflow", "ev-export-script"]
+    },
+    {
+      "source": "template-generator",
+      "target": "visual-specs",
+      "dependency_type": "compile-time",
+      "reason": "模板生成器内置七套风格配置，并依赖视觉语义字段驱动最终 SVG。",
+      "evidence_ids": ["ev-style-profiles", "ev-style-matrix"]
+    },
+    {
+      "source": "template-generator",
+      "target": "template-library",
+      "dependency_type": "compile-time",
+      "reason": "模板生成器根据 template_type 定位模板目录并推导 viewBox。",
+      "evidence_ids": ["ev-template-dir", "ev-template-skeleton"]
+    },
+    {
+      "source": "export-pipeline",
+      "target": "visual-specs",
+      "dependency_type": "runtime-tooling",
+      "reason": "导出脚本会先按 style 选择对应参考文件，再执行 SVG 校验与导出。",
+      "evidence_ids": ["ev-export-script", "ev-style-matrix"]
+    },
+    {
+      "source": "export-pipeline",
+      "target": "rsvg-toolchain",
+      "dependency_type": "external-tool",
+      "reason": "导出脚本依赖 rsvg-convert 完成 PNG 生成。",
+      "evidence_ids": ["ev-readme-overview", "ev-export-script"]
+    },
+    {
+      "source": "batch-regression",
+      "target": "regression-fixtures",
+      "dependency_type": "test-data",
+      "reason": "批量测试按 fixture 中的 style 与 template_type 选择样例输入。",
+      "evidence_ids": ["ev-batch-test", "ev-fixture-example"]
+    },
+    {
+      "source": "batch-regression",
+      "target": "template-generator",
+      "dependency_type": "test-execution",
+      "reason": "批量测试直接调用模板生成器渲染所有回归样图。",
+      "evidence_ids": ["ev-batch-test", "ev-generator-write"]
+    },
+    {
+      "source": "batch-regression",
+      "target": "export-pipeline",
+      "dependency_type": "test-verification",
+      "reason": "批量测试复用校验脚本，并串接 PNG 导出验证最终产物。",
+      "evidence_ids": ["ev-batch-test", "ev-export-script"]
+    }
+  ],
+  "ownership_notes": [
+    {
+      "group": "entry",
+      "note": "入口层维护安装、触发词、默认提示词和标准工作流，是技能消费者最先接触到的契约面。"
+    },
+    {
+      "group": "engine",
+      "note": "生成层集中在 scripts/，其中 Python 生成器承载主要复杂度，shell 脚本负责验证与导出收尾。"
+    },
+    {
+      "group": "spec",
+      "note": "视觉规范层通过 references/ 与 templates/ 控制风格、图标和各图型骨架，是输出一致性的来源。"
+    },
+    {
+      "group": "quality",
+      "note": "质量层用 fixtures 与样例资产固定回归基线，避免风格或布局迭代破坏样图质量。"
+    }
+  ],
+  "groups": [
+    {
+      "id": "entry",
+      "label": "入口与分发层",
+      "layout_hint": {
+        "order": 1
+      }
+    },
+    {
+      "id": "engine",
+      "label": "生成与导出层",
+      "layout_hint": {
+        "order": 2
+      }
+    },
+    {
+      "id": "spec",
+      "label": "视觉规范层",
+      "layout_hint": {
+        "order": 3
+      }
+    },
+    {
+      "id": "quality",
+      "label": "验证与样例层",
+      "layout_hint": {
+        "order": 4
+      }
+    },
+    {
+      "id": "toolchain",
+      "label": "外部工具链",
+      "layout_hint": {
+        "order": 5
+      }
+    }
+  ],
+  "elements": [
+    {
+      "id": "package-surface",
+      "label": "包分发表面",
+      "type": "subsystem",
+      "group": "entry",
+      "code_kind": "package",
+      "paths": [
+        "package.json",
+        ".npmignore"
+      ],
+      "responsibility": "定义 npm 包身份、主入口与发布白名单，决定安装后哪些技能文件与资产对外可见。",
+      "exposes": [
+        "main=SKILL.md",
+        "files 白名单",
+        "Node >=14"
+      ],
+      "evidence_ids": ["ev-package-manifest"]
+    },
+    {
+      "id": "skill-contract",
+      "label": "技能入口契约",
+      "type": "interface",
+      "group": "entry",
+      "code_kind": "module",
+      "paths": [
+        "SKILL.md",
+        "README.md",
+        "README.zh.md",
+        "agents/openai.yaml"
+      ],
+      "responsibility": "声明触发词、生成工作流、推荐脚本与默认提示词，把自然语言出图能力包装成可安装技能。",
+      "exposes": [
+        "技能触发描述",
+        "标准生成流程",
+        "default_prompt"
+      ],
+      "evidence_ids": ["ev-skill-workflow", "ev-skill-scripts", "ev-agent-contract", "ev-readme-overview"]
+    },
+    {
+      "id": "template-generator",
+      "label": "模板生成器",
+      "type": "component",
+      "group": "engine",
+      "code_kind": "module",
+      "paths": [
+        "scripts/generate-from-template.py"
+      ],
+      "responsibility": "把 style、containers、nodes、arrows、legend 等结构化输入转换成最终 SVG，并写入输出文件。",
+      "exposes": [
+        "python3 scripts/generate-from-template.py <template-type> <output-path> [data-json]",
+        "build_svg(template_type, data)"
+      ],
+      "evidence_ids": ["ev-generator-entry", "ev-template-dir", "ev-style-profiles", "ev-generator-build", "ev-generator-write"]
+    },
+    {
+      "id": "export-pipeline",
+      "label": "校验导出脚本",
+      "type": "component",
+      "group": "engine",
+      "code_kind": "script-suite",
+      "paths": [
+        "scripts/generate-diagram.sh",
+        "scripts/validate-svg.sh",
+        "scripts/README.md"
+      ],
+      "responsibility": "对 SVG 执行语法与结构校验，并通过 rsvg-convert 生成 PNG 交付物。",
+      "exposes": [
+        "./scripts/generate-diagram.sh [OPTIONS]",
+        "./scripts/validate-svg.sh <svg-file>"
+      ],
+      "evidence_ids": ["ev-export-script", "ev-validate-doc"]
+    },
+    {
+      "id": "visual-specs",
+      "label": "风格与图标规范",
+      "type": "component",
+      "group": "spec",
+      "code_kind": "shared-lib",
+      "paths": [
+        "references/style-1-flat-icon.md",
+        "references/style-2-dark-terminal.md",
+        "references/style-3-blueprint.md",
+        "references/style-4-notion-clean.md",
+        "references/style-5-glassmorphism.md",
+        "references/style-6-claude-official.md",
+        "references/style-7-openai.md",
+        "references/style-diagram-matrix.md",
+        "references/icons.md",
+        "references/svg-layout-best-practices.md"
+      ],
+      "responsibility": "定义七套视觉风格、图标词汇、图型适配矩阵与 SVG 布局约束，作为生成器与维护者的共同视觉基线。",
+      "exposes": [
+        "style-N 参考文档",
+        "icons.md",
+        "style-diagram-matrix.md"
+      ],
+      "evidence_ids": ["ev-style-matrix", "ev-icons-reference"]
+    },
+    {
+      "id": "template-library",
+      "label": "SVG 模板库",
+      "type": "component",
+      "group": "spec",
+      "code_kind": "shared-lib",
+      "paths": [
+        "templates/architecture.svg",
+        "templates/data-flow.svg",
+        "templates/flowchart.svg",
+        "templates/sequence.svg",
+        "templates/comparison-matrix.svg",
+        "templates/timeline.svg",
+        "templates/agent-architecture.svg",
+        "templates/use-case.svg",
+        "templates/state-machine.svg",
+        "templates/er-diagram.svg"
+      ],
+      "responsibility": "提供各图型的基础 viewBox、占位结构与节点/箭头/图例插槽，供生成器统一填充。",
+      "exposes": [
+        "template_type -> SVG 骨架",
+        "viewBox 默认值"
+      ],
+      "evidence_ids": ["ev-template-skeleton", "ev-template-dir"]
+    },
+    {
+      "id": "regression-fixtures",
+      "label": "回归样例库",
+      "type": "component",
+      "group": "quality",
+      "code_kind": "fixture-set",
+      "paths": [
+        "fixtures/mem0-style1.json",
+        "fixtures/tool-call-style2.json",
+        "fixtures/microservices-style3.json",
+        "fixtures/agent-memory-types-style4.json",
+        "fixtures/multi-agent-style5.json",
+        "fixtures/system-architecture-style6.json",
+        "fixtures/api-flow-style7.json"
+      ],
+      "responsibility": "保存各风格代表性 JSON 输入，固定容器、节点、箭头和图例结构，作为回归测试与样图基线。",
+      "exposes": [
+        "template_type",
+        "style",
+        "containers/nodes/arrows/legend"
+      ],
+      "evidence_ids": ["ev-fixture-example"]
+    },
+    {
+      "id": "batch-regression",
+      "label": "批量回归测试",
+      "type": "component",
+      "group": "quality",
+      "code_kind": "script-suite",
+      "paths": [
+        "scripts/test-all-styles.sh"
+      ],
+      "responsibility": "遍历 fixtures，为每种风格批量渲染、校验并导出 PNG，确认样例级输出没有回退。",
+      "exposes": [
+        "./scripts/test-all-styles.sh"
+      ],
+      "evidence_ids": ["ev-batch-test"]
+    },
+    {
+      "id": "showcase-assets",
+      "label": "展示样图资产",
+      "type": "component",
+      "group": "quality",
+      "code_kind": "asset-set",
+      "paths": [
+        "assets/samples/sample-style1-flat.png",
+        "assets/samples/sample-style2-dark.png",
+        "assets/samples/sample-style3-blueprint.png",
+        "assets/samples/sample-style4-notion.png",
+        "assets/samples/sample-style5-glass.png",
+        "assets/samples/sample-style6-claude.png",
+        "assets/samples/sample-style7-openai.png",
+        "agentloop-core.svg"
+      ],
+      "responsibility": "提供 README 展示图与仓库自带 SVG 样例，作为人工审阅视觉质量时的可见基线。",
+      "exposes": [
+        "README 样图引用",
+        "内置示例 SVG"
+      ],
+      "evidence_ids": ["ev-sample-asset", "ev-readme-overview"]
+    },
+    {
+      "id": "rsvg-toolchain",
+      "label": "rsvg-convert",
+      "type": "external",
+      "group": "toolchain",
+      "code_kind": "external-tool",
+      "paths": [],
+      "responsibility": "把仓库生成的 SVG 转成高分辨率 PNG，是交付链路中唯一显式要求的外部工具。",
+      "exposes": [
+        "rsvg-convert -w 1920 <svg> -o <png>"
+      ],
+      "evidence_ids": ["ev-readme-overview", "ev-export-script"]
+    }
+  ],
+  "relationships": [
+    {
+      "source": "package-surface",
+      "target": "skill-contract",
+      "label": "把 Skill 文档定义为安装后主入口",
+      "summary_label": "发布入口",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": ["ev-package-manifest", "ev-skill-workflow"]
+    },
+    {
+      "source": "skill-contract",
+      "target": "visual-specs",
+      "label": "要求按风格参考和图标参考组织生成语义",
+      "summary_label": "加载规范",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": ["ev-skill-workflow", "ev-icons-reference"]
+    },
+    {
+      "source": "skill-contract",
+      "target": "template-generator",
+      "label": "推荐使用模板生成器从结构化 JSON 起稿",
+      "summary_label": "起稿生成",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": ["ev-skill-scripts", "ev-generator-entry"]
+    },
+    {
+      "source": "skill-contract",
+      "target": "export-pipeline",
+      "label": "要求交付前执行 SVG 校验与 PNG 导出",
+      "summary_label": "校验导出",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": ["ev-skill-workflow", "ev-export-script"]
+    },
+    {
+      "source": "template-generator",
+      "target": "visual-specs",
+      "label": "内置七套风格配置并复用视觉字段约定",
+      "summary_label": "应用风格",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": ["ev-style-profiles", "ev-style-matrix"]
+    },
+    {
+      "source": "template-generator",
+      "target": "template-library",
+      "label": "按 template_type 读取 SVG 模板并推导默认 viewBox",
+      "summary_label": "读取模板",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": ["ev-template-dir", "ev-template-skeleton"]
+    },
+    {
+      "source": "export-pipeline",
+      "target": "visual-specs",
+      "label": "按 style 选择对应参考文件后再执行验证与导出",
+      "summary_label": "选风格",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": ["ev-export-script", "ev-style-matrix"]
+    },
+    {
+      "source": "export-pipeline",
+      "target": "rsvg-toolchain",
+      "label": "调用 rsvg-convert 把 SVG 导出为高分辨率 PNG",
+      "summary_label": "导出PNG",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": ["ev-readme-overview", "ev-export-script"]
+    },
+    {
+      "source": "batch-regression",
+      "target": "regression-fixtures",
+      "label": "按 fixture 的 style 与 template_type 读取回归输入",
+      "summary_label": "读取夹具",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": ["ev-batch-test", "ev-fixture-example"]
+    },
+    {
+      "source": "batch-regression",
+      "target": "template-generator",
+      "label": "对每个回归夹具批量调用模板生成器渲染 SVG",
+      "summary_label": "批量渲染",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": ["ev-batch-test", "ev-generator-write"]
+    },
+    {
+      "source": "batch-regression",
+      "target": "export-pipeline",
+      "label": "复用 SVG 校验逻辑并串接 PNG 导出验证",
+      "summary_label": "跑校验",
+      "kind": "dependency",
+      "inferred": true,
+      "evidence_ids": ["ev-batch-test", "ev-export-script"]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-package-manifest",
+      "path": "package.json",
+      "reason": "声明包名、描述、main=SKILL.md、files 白名单与 Node 版本约束，界定可发布模块边界。"
+    },
+    {
+      "id": "ev-readme-overview",
+      "path": "README.md",
+      "reason": "总览说明该仓库把自然语言描述转换为 SVG，并通过 rsvg-convert 导出 PNG，同时展示七种风格与十四类图。"
+    },
+    {
+      "id": "ev-skill-workflow",
+      "path": "SKILL.md",
+      "reason": "定义强制工作流，要求先分类、抽结构、加载风格参考与图标参考，再写 SVG、验证并导出 PNG。"
+    },
+    {
+      "id": "ev-skill-scripts",
+      "path": "SKILL.md",
+      "reason": "把 generate-from-template.py、generate-diagram.sh、validate-svg.sh、test-all-styles.sh 列为推荐辅助脚本。"
+    },
+    {
+      "id": "ev-agent-contract",
+      "path": "agents/openai.yaml",
+      "reason": "提供 display_name、short_description 与 default_prompt，说明技能在兼容运行时中的入口元数据。"
+    },
+    {
+      "id": "ev-template-dir",
+      "path": "scripts/generate-from-template.py",
+      "reason": "脚本定义 TEMPLATE_DIR 并在 parse_template_viewbox 中按 template_type 读取 templates/ 下的 SVG 模板。"
+    },
+    {
+      "id": "ev-style-profiles",
+      "path": "scripts/generate-from-template.py",
+      "reason": "脚本内置 STYLE_PROFILES，并通过 parse_style 解析 1-7 风格配置。"
+    },
+    {
+      "id": "ev-generator-entry",
+      "path": "scripts/generate-from-template.py",
+      "reason": "脚本 usage 与 main 入口定义模板类型、输出路径和 JSON 数据作为核心接口。"
+    },
+    {
+      "id": "ev-generator-build",
+      "path": "scripts/generate-from-template.py",
+      "reason": "build_svg 组装 containers、nodes、arrows、legend 并生成完整 SVG。"
+    },
+    {
+      "id": "ev-generator-write",
+      "path": "scripts/generate-from-template.py",
+      "reason": "main 末尾把生成结果写入 output_path，形成测试和交付可消费的 SVG 文件。"
+    },
+    {
+      "id": "ev-export-script",
+      "path": "scripts/generate-diagram.sh",
+      "reason": "脚本按 style 选择 references/ 文件，调用 validate-svg.sh，并使用 rsvg-convert 导出 PNG。"
+    },
+    {
+      "id": "ev-validate-doc",
+      "path": "scripts/README.md",
+      "reason": "脚本文档明确 validate-svg.sh、generate-diagram.sh 与 test-all-styles.sh 的职责分工。"
+    },
+    {
+      "id": "ev-style-matrix",
+      "path": "references/style-diagram-matrix.md",
+      "reason": "风格矩阵说明不同图型应如何选择 style，是维护视觉基线的重要规范文件。"
+    },
+    {
+      "id": "ev-icons-reference",
+      "path": "references/icons.md",
+      "reason": "图标参考定义通用语义形状和产品图标约定，是视觉词汇表的核心来源。"
+    },
+    {
+      "id": "ev-template-skeleton",
+      "path": "templates/architecture.svg",
+      "reason": "模板文件展示 viewBox 与 NODES/ARROWS/LEGEND 占位骨架，证明 templates/ 是生成器消费的结构模板库。"
+    },
+    {
+      "id": "ev-fixture-example",
+      "path": "fixtures/system-architecture-style6.json",
+      "reason": "回归夹具显式包含 template_type、style、containers、nodes、arrows 和 legend 等样图输入结构。"
+    },
+    {
+      "id": "ev-batch-test",
+      "path": "scripts/test-all-styles.sh",
+      "reason": "批量测试脚本遍历 fixtures，读取 style/template_type，调用生成器、校验器并在可用时导出 PNG。"
+    },
+    {
+      "id": "ev-sample-asset",
+      "path": "assets/samples/sample-style6-claude.png",
+      "reason": "样例 PNG 是仓库对外展示的成品基线之一，说明 assets/ 被维护为可见输出资产。"
+    }
+  ]
+}

@@ -1,0 +1,725 @@
+{
+  "view": "runtime",
+  "title": "fireworks-tech-graph 运行视图",
+  "description": "本视图描述 fireworks-tech-graph 在出图、模板化生成、校验导出与批量回归测试中的运行协作。仓库本身不是常驻服务，运行由技能宿主或脚本触发，核心边界围绕脚本编排、模板/风格资源读取、SVG/PNG 产物落盘与 rsvg-convert 外部依赖展开。",
+  "scope": {
+    "focus": "技能触发的图表生成与仓库内辅助脚本的执行协作",
+    "included_surfaces": [
+      "对话式技能出图工作流",
+      "模板化 SVG 生成脚本",
+      "SVG 校验与 PNG 导出脚本",
+      "基于 fixtures 的批量回归测试"
+    ],
+    "reading_strategy": "先识别主运行路径，再保留对路径有实质影响的模板、风格、fixtures、输出目录与外部渲染依赖。"
+  },
+  "omissions": [
+    "assets/samples 下的展示图片，它们用于 README 展示，不参与主运行编排。",
+    "大部分 references/style-*.md 的具体视觉 token，仅在“资源包”参与者中汇总表示，不逐文件展开。",
+    "templates/ 下未被当前路径直接引用的模板细节，仅保留模板目录作为统一资源边界。"
+  ],
+  "layout_suggestion": {
+    "strategy": "runtime-lanes",
+    "orientation": "left-to-right",
+    "lane_style": "participant-sequence",
+    "primary_paths": [
+      "path-skill-diagram",
+      "path-template-generator",
+      "path-validate-export",
+      "path-regression-batch"
+    ]
+  },
+  "groups": [
+    {
+      "id": "lane-trigger",
+      "label": "触发方",
+      "layout_hint": {
+        "order": 1
+      }
+    },
+    {
+      "id": "lane-orchestration",
+      "label": "编排与执行",
+      "layout_hint": {
+        "order": 2
+      }
+    },
+    {
+      "id": "lane-resource",
+      "label": "模板与资源",
+      "layout_hint": {
+        "order": 3
+      }
+    },
+    {
+      "id": "lane-verification",
+      "label": "校验与渲染依赖",
+      "layout_hint": {
+        "order": 4
+      }
+    },
+    {
+      "id": "lane-artifact",
+      "label": "产物与状态边界",
+      "layout_hint": {
+        "order": 5
+      }
+    }
+  ],
+  "elements": [
+    {
+      "id": "diagram-requester",
+      "label": "出图请求方",
+      "type": "external",
+      "group": "lane-trigger",
+      "evidence_ids": [
+        "ev-skill-trigger",
+        "ev-agent-interface"
+      ]
+    },
+    {
+      "id": "maintainer",
+      "label": "维护者/脚本调用者",
+      "type": "external",
+      "group": "lane-trigger",
+      "evidence_ids": [
+        "ev-skill-helper-scripts",
+        "ev-script-readme"
+      ]
+    },
+    {
+      "id": "skill-runtime",
+      "label": "技能运行时",
+      "type": "orchestrator",
+      "group": "lane-orchestration",
+      "evidence_ids": [
+        "ev-skill-trigger",
+        "ev-skill-workflow",
+        "ev-agent-interface"
+      ]
+    },
+    {
+      "id": "template-generator",
+      "label": "模板生成器",
+      "type": "worker",
+      "group": "lane-orchestration",
+      "evidence_ids": [
+        "ev-template-script-doc",
+        "ev-template-script-entry",
+        "ev-template-script-template-dir"
+      ]
+    },
+    {
+      "id": "export-script",
+      "label": "导出脚本",
+      "type": "job",
+      "group": "lane-orchestration",
+      "evidence_ids": [
+        "ev-export-script-args",
+        "ev-export-script-run"
+      ]
+    },
+    {
+      "id": "batch-runner",
+      "label": "批量测试脚本",
+      "type": "scheduler",
+      "group": "lane-orchestration",
+      "evidence_ids": [
+        "ev-batch-script-entry",
+        "ev-batch-script-loop"
+      ]
+    },
+    {
+      "id": "resource-pack",
+      "label": "模板与风格资源包",
+      "type": "subsystem",
+      "group": "lane-resource",
+      "evidence_ids": [
+        "ev-skill-style-load",
+        "ev-template-script-template-dir",
+        "ev-template-placeholder",
+        "ev-style-matrix"
+      ]
+    },
+    {
+      "id": "fixture-pack",
+      "label": "回归样例集",
+      "type": "subsystem",
+      "group": "lane-resource",
+      "evidence_ids": [
+        "ev-fixture-sample",
+        "ev-batch-script-fixtures"
+      ]
+    },
+    {
+      "id": "svg-validator",
+      "label": "SVG 校验器",
+      "type": "worker",
+      "group": "lane-verification",
+      "evidence_ids": [
+        "ev-validator-entry",
+        "ev-validator-checks",
+        "ev-validator-render-check"
+      ]
+    },
+    {
+      "id": "rsvg-convert",
+      "label": "rsvg-convert",
+      "type": "external",
+      "group": "lane-verification",
+      "evidence_ids": [
+        "ev-skill-workflow",
+        "ev-export-script-run",
+        "ev-validator-render-check",
+        "ev-batch-script-loop"
+      ]
+    },
+    {
+      "id": "diagram-output",
+      "label": "图表输出目录",
+      "type": "component",
+      "group": "lane-artifact",
+      "evidence_ids": [
+        "ev-skill-output",
+        "ev-template-script-entry",
+        "ev-export-script-output"
+      ]
+    },
+    {
+      "id": "regression-output",
+      "label": "回归测试输出目录",
+      "type": "component",
+      "group": "lane-artifact",
+      "evidence_ids": [
+        "ev-batch-script-entry",
+        "ev-batch-script-loop"
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-skill-trigger",
+      "source": "diagram-requester",
+      "target": "skill-runtime",
+      "label": "触发出图",
+      "kind": "sync",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-skill-trigger",
+        "ev-agent-interface"
+      ]
+    },
+    {
+      "id": "rel-skill-load-resources",
+      "source": "skill-runtime",
+      "target": "resource-pack",
+      "label": "读取风格/图标规则",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-skill-style-load"
+      ]
+    },
+    {
+      "id": "rel-skill-write-svg",
+      "source": "skill-runtime",
+      "target": "diagram-output",
+      "label": "写入 SVG",
+      "kind": "state",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-skill-workflow",
+        "ev-skill-output"
+      ]
+    },
+    {
+      "id": "rel-skill-validate",
+      "source": "skill-runtime",
+      "target": "rsvg-convert",
+      "label": "调用校验",
+      "kind": "sync",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-skill-workflow"
+      ]
+    },
+    {
+      "id": "rel-skill-export-png",
+      "source": "rsvg-convert",
+      "target": "diagram-output",
+      "label": "导出 PNG",
+      "kind": "state",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-skill-workflow",
+        "ev-skill-output"
+      ]
+    },
+    {
+      "id": "rel-template-trigger",
+      "source": "maintainer",
+      "target": "template-generator",
+      "label": "提交模板数据",
+      "kind": "sync",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-template-script-doc",
+        "ev-template-script-entry"
+      ]
+    },
+    {
+      "id": "rel-template-load-resources",
+      "source": "template-generator",
+      "target": "resource-pack",
+      "label": "加载模板/风格",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-template-script-template-dir",
+        "ev-template-placeholder"
+      ]
+    },
+    {
+      "id": "rel-template-write-svg",
+      "source": "template-generator",
+      "target": "diagram-output",
+      "label": "输出 SVG",
+      "kind": "state",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-template-script-entry"
+      ]
+    },
+    {
+      "id": "rel-export-trigger",
+      "source": "maintainer",
+      "target": "export-script",
+      "label": "运行导出脚本",
+      "kind": "sync",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-export-script-args"
+      ]
+    },
+    {
+      "id": "rel-export-check-style",
+      "source": "export-script",
+      "target": "resource-pack",
+      "label": "检查风格文件",
+      "kind": "dependency",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-export-script-style-check"
+      ]
+    },
+    {
+      "id": "rel-export-call-validator",
+      "source": "export-script",
+      "target": "svg-validator",
+      "label": "调用校验器",
+      "kind": "sync",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-export-script-run"
+      ]
+    },
+    {
+      "id": "rel-validator-read-svg",
+      "source": "svg-validator",
+      "target": "diagram-output",
+      "label": "读取 SVG",
+      "kind": "state",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-validator-entry"
+      ]
+    },
+    {
+      "id": "rel-validator-render-check",
+      "source": "svg-validator",
+      "target": "rsvg-convert",
+      "label": "渲染验证",
+      "kind": "sync",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-validator-render-check"
+      ]
+    },
+    {
+      "id": "rel-export-png",
+      "source": "export-script",
+      "target": "rsvg-convert",
+      "label": "导出 PNG",
+      "kind": "sync",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-export-script-run"
+      ]
+    },
+    {
+      "id": "rel-rsvg-write-png",
+      "source": "rsvg-convert",
+      "target": "diagram-output",
+      "label": "写入 PNG",
+      "kind": "state",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-export-script-output"
+      ]
+    },
+    {
+      "id": "rel-batch-trigger",
+      "source": "maintainer",
+      "target": "batch-runner",
+      "label": "启动回归测试",
+      "kind": "sync",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-batch-script-entry"
+      ]
+    },
+    {
+      "id": "rel-batch-read-fixtures",
+      "source": "batch-runner",
+      "target": "fixture-pack",
+      "label": "筛选样例",
+      "kind": "state",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-batch-script-fixtures",
+        "ev-fixture-sample"
+      ]
+    },
+    {
+      "id": "rel-batch-render",
+      "source": "batch-runner",
+      "target": "template-generator",
+      "label": "逐个渲染",
+      "kind": "sync",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-batch-script-loop"
+      ]
+    },
+    {
+      "id": "rel-batch-write-svg",
+      "source": "template-generator",
+      "target": "regression-output",
+      "label": "写入测试 SVG",
+      "kind": "state",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-batch-script-loop",
+        "ev-template-script-entry"
+      ]
+    },
+    {
+      "id": "rel-batch-validate",
+      "source": "batch-runner",
+      "target": "svg-validator",
+      "label": "批量校验",
+      "kind": "sync",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-batch-script-loop"
+      ]
+    },
+    {
+      "id": "rel-batch-export",
+      "source": "batch-runner",
+      "target": "rsvg-convert",
+      "label": "批量导出 PNG",
+      "kind": "sync",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-batch-script-loop"
+      ]
+    },
+    {
+      "id": "rel-batch-write-png",
+      "source": "rsvg-convert",
+      "target": "regression-output",
+      "label": "写入测试 PNG",
+      "kind": "state",
+      "inferred": false,
+      "evidence_ids": [
+        "ev-batch-script-loop"
+      ]
+    }
+  ],
+  "primary_paths": [
+    {
+      "id": "path-skill-diagram",
+      "label": "对话式技能出图",
+      "summary": "用户通过技能宿主触发出图，技能运行时读取风格规则，写出 SVG，随后用 rsvg-convert 校验并导出 PNG。",
+      "entrypoint": "技能触发词或系统/流程描述进入 fireworks-tech-graph skill",
+      "entry_evidence_ids": [
+        "ev-skill-trigger",
+        "ev-agent-interface"
+      ],
+      "lifecycle_owner": "skill-runtime",
+      "owner_evidence_ids": [
+        "ev-skill-workflow"
+      ],
+      "participant_order": [
+        "diagram-requester",
+        "skill-runtime",
+        "resource-pack",
+        "rsvg-convert",
+        "diagram-output"
+      ],
+      "main_step_ids": [
+        "rel-skill-trigger",
+        "rel-skill-load-resources",
+        "rel-skill-write-svg",
+        "rel-skill-validate",
+        "rel-skill-export-png"
+      ]
+    },
+    {
+      "id": "path-template-generator",
+      "label": "模板化 SVG 生成",
+      "summary": "维护者或上层运行时向 generate-from-template.py 提交 JSON 数据，脚本解析模板目录与样式配置后直接写出 SVG。",
+      "entrypoint": "python3 ./scripts/generate-from-template.py <template-type> <output-path> [data-json]",
+      "entry_evidence_ids": [
+        "ev-template-script-doc",
+        "ev-template-script-entry"
+      ],
+      "lifecycle_owner": "template-generator",
+      "owner_evidence_ids": [
+        "ev-template-script-entry"
+      ],
+      "participant_order": [
+        "maintainer",
+        "template-generator",
+        "resource-pack",
+        "diagram-output"
+      ],
+      "main_step_ids": [
+        "rel-template-trigger",
+        "rel-template-load-resources",
+        "rel-template-write-svg"
+      ]
+    },
+    {
+      "id": "path-validate-export",
+      "label": "脚本式校验与导出",
+      "summary": "调用 generate-diagram.sh 时，脚本先确认风格文件和目标 SVG，再调用 validate-svg.sh，最后交给 rsvg-convert 输出 PNG。",
+      "entrypoint": "./scripts/generate-diagram.sh -t <type> -s <style> -o <path>",
+      "entry_evidence_ids": [
+        "ev-export-script-args"
+      ],
+      "lifecycle_owner": "export-script",
+      "owner_evidence_ids": [
+        "ev-export-script-run"
+      ],
+      "participant_order": [
+        "maintainer",
+        "export-script",
+        "resource-pack",
+        "svg-validator",
+        "rsvg-convert",
+        "diagram-output"
+      ],
+      "main_step_ids": [
+        "rel-export-trigger",
+        "rel-export-check-style",
+        "rel-export-call-validator",
+        "rel-validator-read-svg",
+        "rel-validator-render-check",
+        "rel-export-png",
+        "rel-rsvg-write-png"
+      ]
+    },
+    {
+      "id": "path-regression-batch",
+      "label": "批量回归测试",
+      "summary": "test-all-styles.sh 扫描 fixtures，按 style 过滤样例，逐个调用模板生成器并校验，再批量导出测试 PNG 到 test-output。",
+      "entrypoint": "./scripts/test-all-styles.sh",
+      "entry_evidence_ids": [
+        "ev-batch-script-entry"
+      ],
+      "lifecycle_owner": "batch-runner",
+      "owner_evidence_ids": [
+        "ev-batch-script-loop"
+      ],
+      "participant_order": [
+        "maintainer",
+        "batch-runner",
+        "fixture-pack",
+        "template-generator",
+        "resource-pack",
+        "svg-validator",
+        "rsvg-convert",
+        "regression-output"
+      ],
+      "main_step_ids": [
+        "rel-batch-trigger",
+        "rel-batch-read-fixtures",
+        "rel-batch-render",
+        "rel-template-load-resources",
+        "rel-batch-write-svg",
+        "rel-batch-validate",
+        "rel-batch-export",
+        "rel-batch-write-png"
+      ]
+    }
+  ],
+  "render_hints": {
+    "runtime": {
+      "prioritize_primary_paths": true,
+      "prefer_numbered_steps": true,
+      "show_state_boundaries": true,
+      "collapse_static_assets": true,
+      "lane_emphasis": [
+        "编排与执行",
+        "模板与资源",
+        "产物与状态边界"
+      ]
+    }
+  },
+  "evidence": [
+    {
+      "id": "ev-skill-trigger",
+      "path": "SKILL.md",
+      "lines": "3-8",
+      "reason": "定义 fireworks-tech-graph 何时被触发，以及其面向的出图请求类型。"
+    },
+    {
+      "id": "ev-agent-interface",
+      "path": "agents/openai.yaml",
+      "lines": "1-4",
+      "reason": "声明技能接口展示名、简介和默认 prompt，说明有上层运行时入口。"
+    },
+    {
+      "id": "ev-skill-helper-scripts",
+      "path": "SKILL.md",
+      "lines": "37-78",
+      "reason": "列出仓库内四个辅助脚本及其使用场景。"
+    },
+    {
+      "id": "ev-script-readme",
+      "path": "scripts/README.md",
+      "lines": "1-40",
+      "reason": "脚本 README 以中文说明 validate、generate、template、batch test 的职责。"
+    },
+    {
+      "id": "ev-skill-workflow",
+      "path": "SKILL.md",
+      "lines": "85-96",
+      "reason": "给出技能出图的固定工作流：分类、加载风格、写 SVG、校验、导出 PNG、汇报路径。"
+    },
+    {
+      "id": "ev-skill-style-load",
+      "path": "SKILL.md",
+      "lines": "90-92",
+      "reason": "明确运行期会读取 references/style-*.md 与 references/icons.md。"
+    },
+    {
+      "id": "ev-skill-output",
+      "path": "SKILL.md",
+      "lines": "401-405",
+      "reason": "定义 SVG/PNG 默认输出位置与自定义输出路径规则。"
+    },
+    {
+      "id": "ev-template-script-doc",
+      "path": "SKILL.md",
+      "lines": "49-55",
+      "reason": "说明 generate-from-template.py 接收 template-type、output-path 与 data-json，并从模板生成 SVG。"
+    },
+    {
+      "id": "ev-template-script-template-dir",
+      "path": "scripts/generate-from-template.py",
+      "lines": "28-40",
+      "reason": "脚本将 templates 目录设为资源根，并按 template_type 维护默认 viewBox。"
+    },
+    {
+      "id": "ev-template-script-entry",
+      "path": "scripts/generate-from-template.py",
+      "lines": "1524-1540",
+      "reason": "模板生成器的入口读取参数或 stdin JSON，构建 SVG 内容并写到 output_path。"
+    },
+    {
+      "id": "ev-template-placeholder",
+      "path": "templates/architecture.svg",
+      "lines": "1-23",
+      "reason": "模板文件提供基础 SVG 结构与 NODES/ARROWS/LEGEND 占位。"
+    },
+    {
+      "id": "ev-style-matrix",
+      "path": "references/style-diagram-matrix.md",
+      "lines": "1-14",
+      "reason": "风格矩阵文档说明不同图类型如何选择风格资源。"
+    },
+    {
+      "id": "ev-export-script-args",
+      "path": "scripts/generate-diagram.sh",
+      "lines": "13-107",
+      "reason": "导出脚本定义类型、风格、输出路径与宽度参数，并计算目标 SVG/PNG 路径。"
+    },
+    {
+      "id": "ev-export-script-style-check",
+      "path": "scripts/generate-diagram.sh",
+      "lines": "109-117",
+      "reason": "导出脚本在运行期定位并校验 references 下的风格文件。"
+    },
+    {
+      "id": "ev-export-script-run",
+      "path": "scripts/generate-diagram.sh",
+      "lines": "125-151",
+      "reason": "若 SVG 已存在，脚本先调用 validate-svg.sh，再调用 rsvg-convert 输出 PNG。"
+    },
+    {
+      "id": "ev-export-script-output",
+      "path": "scripts/generate-diagram.sh",
+      "lines": "96-104",
+      "reason": "导出脚本根据 OUTPUT_PATH 计算 SVG_FILE 与 PNG_FILE，界定产物落盘边界。"
+    },
+    {
+      "id": "ev-validator-entry",
+      "path": "scripts/validate-svg.sh",
+      "lines": "13-28",
+      "reason": "校验器要求传入已有 SVG 文件路径，并以该文件作为后续检查输入。"
+    },
+    {
+      "id": "ev-validator-checks",
+      "path": "scripts/validate-svg.sh",
+      "lines": "30-80",
+      "reason": "校验器执行 XML、标签平衡、属性引号、文本实体等静态检查。"
+    },
+    {
+      "id": "ev-validator-render-check",
+      "path": "scripts/validate-svg.sh",
+      "lines": "240-279",
+      "reason": "校验器包含箭头碰撞检查，并在后续步骤中依赖 rsvg-convert 做渲染级验证。"
+    },
+    {
+      "id": "ev-batch-script-entry",
+      "path": "scripts/test-all-styles.sh",
+      "lines": "14-25",
+      "reason": "批量测试脚本定义仓库根、test-output 目录与时间戳输出目录。"
+    },
+    {
+      "id": "ev-batch-script-fixtures",
+      "path": "scripts/test-all-styles.sh",
+      "lines": "35-80",
+      "reason": "批量测试先扫描 fixtures 目录，再按 style 字段筛选匹配样例。"
+    },
+    {
+      "id": "ev-batch-script-loop",
+      "path": "scripts/test-all-styles.sh",
+      "lines": "83-117",
+      "reason": "对每个 fixture，脚本调用 generate-from-template.py、validate-svg.sh 和 rsvg-convert，并将结果写到 test-output。"
+    },
+    {
+      "id": "ev-fixture-sample",
+      "path": "fixtures/mem0-style1.json",
+      "lines": "1-8",
+      "reason": "样例文件包含 template_type、style、title、containers 等模板渲染输入字段。"
+    }
+  ],
+  "uncertainties": [
+    "技能运行时本身不在仓库内实现；当前只能依据 SKILL.md 与 agents/openai.yaml 建模其入口和编排责任，无法从本仓库证明宿主如何在“直接写 SVG”和“调用模板生成器”之间做最终选择。",
+    "SKILL.md 的校验示例使用 `rsvg-convert file.svg -o /dev/null`，而 `validate-svg.sh` 实际写入临时 PNG 再删除；渲染图若要精确区分“语法校验”与“临时渲染产物”，需要确认最终表现是否显示这条临时状态边界。",
+    "README/脚本说明把 generate-diagram.sh 描述为“生成”脚本，但脚本实现只验证既有 SVG 并导出 PNG；渲染时应避免把它画成 SVG 内容生产者。"
+  ]
+}
