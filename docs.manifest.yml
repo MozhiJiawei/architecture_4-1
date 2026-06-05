@@ -1,13 +1,13 @@
 schema_version: 1
 name: generate-3plus1-diagrams
-title: 3+1 / 4+1 架构图生成
+title: "[beta] 3+1 / 4+1 架构图生成"
 description: 分析目标仓库并生成可编辑的 draw.io 架构视图。
 entry: docs/index.md
 nav:
-  - title: 概览
-    path: docs/index.md
+  - title: 能力展示
+    path: docs/reference.md
   - title: 使用方式
     path: docs/usage.md
-  - title: 参考
-    path: docs/reference.md
+  - title: 架构概览
+    path: docs/index.md
 status: bootstrap
