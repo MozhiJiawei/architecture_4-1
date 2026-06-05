@@ -2,7 +2,7 @@
 
 这里不讲内部实现，直接看这个 Skill 能不能把一个真实仓库讲清楚、画出来、交付成可编辑的架构图。
 
-当前仓库还没有标准 `forward-tests/` case 目录，所以我在本仓 `.tmp/` 和 `D:\Agent Repo\Mozhi-s-AgentWorkspace\.tmp` 里找历史运行记录。现在整理出两个 case：`fireworks-tech-graph` 和 `dynamo-main`。每个 case 的可编辑 `.drawio`、中间模型、证据说明和 PNG 预览都已经合入 `docs/deliverables/`。
+当前仓库还没有标准 `forward-tests/` case 目录，所以我在本仓 `.tmp/` 和 `D:\Agent Repo\Mozhi-s-AgentWorkspace\.tmp` 里找历史运行记录。现在整理出两个 case：`fireworks-tech-graph` 和 `dynamo-main`。文档只纳管页面直接依赖的 PNG 预览图，原始运行产物仍留在 `.tmp` 运行记录里。
 
 ## Case：fireworks-tech-graph
 
@@ -98,16 +98,14 @@
 
 ![fireworks-tech-graph runtime batch regression](deliverables/fireworks-tech-graph/runtime/batch-regression.png)
 
-### 交付物有什么用
+### 展示图有什么用
 
-最终交付不是一组截图，而是一套可以继续编辑和复用的架构材料：
+最终展示不是只摆几张图，而是按用户理解顺序组织的一组架构材料：
 
 - 给产品或评审看：用例图和能力目录能说明“这个 Skill 能做什么”。
 - 给新维护者看：逻辑图和开发图能说明“系统怎么分块，代码怎么维护”。
 - 给工程排障看：运行图能说明“出图、导出、校验和回归测试怎么串起来”。
-- 给后续迭代用：`.drawio` 可编辑，PNG 可直接贴到文档和 PR 里。
-
-完整交付件目录：`docs/deliverables/fireworks-tech-graph/`
+- 给后续文档用：PNG 预览图已经合入 `docs/deliverables/fireworks-tech-graph/`。
 
 ## Case：dynamo-main
 
@@ -143,7 +141,7 @@ Checkpoint 热恢复：
 
 ![dynamo-main runtime checkpoint recovery](deliverables/dynamo-main/runtime/checkpoint-recovery.png)
 
-完整交付件目录：`docs/deliverables/dynamo-main/`
+展示图目录：`docs/deliverables/dynamo-main/`
 
 ## 当前缺口
 
