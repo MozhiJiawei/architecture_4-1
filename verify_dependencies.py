@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""Verify external dependencies for generate-3plus1-diagrams.
+
+This script checks only user/environment prerequisites: Python packages,
+browser runtime, draw.io runtime, and optional network access. Repository files,
+fixtures, generated artifacts, and renderer self-tests are internal health
+checks and are intentionally outside this dependency check.
+"""
+
 from __future__ import annotations
 
 import argparse
