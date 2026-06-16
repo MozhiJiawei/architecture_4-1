@@ -14,15 +14,15 @@ except ModuleNotFoundError:
     from scripts.views.development.validate import validate_development_view
 
 
-NODE_WIDTH = 340
-MIN_NODE_HEIGHT = 180
-MAX_NODE_HEIGHT = 240
+NODE_WIDTH = 400
+MIN_NODE_HEIGHT = 220
+MAX_NODE_HEIGHT = 300
 TITLE_HEIGHT = 34
 SECTION_HEADER_HEIGHT = 22
 LINE_HEIGHT = 18
 CARD_PADDING = 18
-GRID_X_STEP = 448
-GRID_Y_STEP = 330
+GRID_X_STEP = 540
+GRID_Y_STEP = 400
 MARGIN_X = 64
 MARGIN_Y = 128
 GROUP_PADDING = 32
@@ -107,14 +107,19 @@ def text_units(value: str) -> int:
 
 def estimate_node_height(element: dict[str, Any]) -> int:
     responsibility = str(element.get("responsibility") or "")
+    paths = [str(item) for item in (element.get("paths") or []) if str(item).strip()]
     exposes = [str(item) for item in (element.get("exposes") or []) if str(item).strip()]
     responsibility_lines = max(2, math.ceil(text_units(responsibility) / 34))
+    path_lines = max(1, len(paths))
     expose_lines = max(1, len(exposes))
     height = (
         TITLE_HEIGHT
         + CARD_PADDING
         + SECTION_HEADER_HEIGHT
         + responsibility_lines * LINE_HEIGHT
+        + CARD_PADDING
+        + SECTION_HEADER_HEIGHT
+        + path_lines * LINE_HEIGHT
         + CARD_PADDING
         + SECTION_HEADER_HEIGHT
         + expose_lines * LINE_HEIGHT
@@ -855,7 +860,7 @@ def solve_development_view_layout(model: dict[str, Any]) -> dict[str, Any]:
     for initial in initial_layouts:
         candidate = apply_geometry(model, relationships, initial, heights)
         candidate_report = validate_development_view(candidate)
-        if not candidate_report.errors and not candidate_report.warnings:
+        if not candidate_report.errors:
             return candidate
     for initial in initial_layouts:
         improved = improve_layout(model, relationships, initial, heights, columns, rows)
@@ -878,11 +883,11 @@ def solve_development_view_layout(model: dict[str, Any]) -> dict[str, Any]:
             candidate_report = validate_development_view(candidate)
             candidate_score = len(candidate_report.errors) * EDGE_NODE_PENALTY + len(candidate_report.warnings) * WARNING_PENALTY
             candidate_score += score_layout(model, relationships, improved, heights)
-            if candidate_score < best_score or (not candidate_report.errors and not candidate_report.warnings):
+            if candidate_score < best_score or not candidate_report.errors:
                 best_score = candidate_score
                 solved = candidate
                 report = candidate_report
-            if not report.errors and not report.warnings:
+            if not report.errors:
                 break
     if report.errors:
         messages = "; ".join(f"{message.rule_id}: {message.message}" for message in report.errors[:5])

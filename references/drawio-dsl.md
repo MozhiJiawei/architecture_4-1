@@ -128,7 +128,7 @@ Additional element fields may exist when a view pattern defines them.
 
 Development-oriented element fields may include:
 - optional `code_kind`
-- optional `paths`
+- optional `paths`: concrete repository anchors rendered in development cards as `涉及代码`
 - optional `responsibility`
 - optional `exposes`
 - optional `depends_on`

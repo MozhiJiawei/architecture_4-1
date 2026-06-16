@@ -45,7 +45,7 @@ Each development `elements` entry should usually include:
 - `type`, usually `subsystem`, `component`, `service`, `interface`, or `external`
 - `group` for its layer or ownership zone
 - optional `code_kind` such as `repository`, `package`, `module`, `script-suite`, `shared-lib`, `adapter`, or `schema`
-- optional `paths` as the concrete repository anchors
+- optional `paths` as the concrete repository anchors; these render in each card under `涉及代码`
 - optional `responsibility`
 - optional `exposes`
 - optional `depends_on`
@@ -67,6 +67,7 @@ Collapse implementation fragments into one element when a developer would reason
 When the renderer consumes this file:
 
 - keep `responsibility` semantically complete in JSON even if the rendered card later wraps it
+- keep `paths` concrete and compact; prefer 1-5 maintained files or directories that a developer would open first
 - keep every interface in `exposes`; do not pre-merge multiple interfaces into one string
 - prefer one self-documenting interface signature or entrypoint per `exposes` item
 
@@ -96,7 +97,7 @@ Prepare the model so the renderer can derive that shape:
 - use `groups` for broad code layers such as orchestration, evolution workflow, evaluation, support, and external dependencies
 - keep one element per developer-meaningful module, not per file
 - keep element labels short enough to fit inside rectangular cards
-- put detailed path lists in `paths` or evidence, not in the rendered label
+- put detailed path lists in `paths` or evidence, not in the rendered label; visible `paths` should stay concise enough for the `涉及代码` card section
 - generate `summary_label` for every rendered relationship; do not use opaque codes like `R1` or `R2` as the visible edge text
 - keep `summary_label` as a short action or dependency phrase such as `读取字段`, `生成配置`, or `验证注入`
 - keep `relationships` as the authoritative full dependency inventory for development view rendering
@@ -142,6 +143,7 @@ For subagents, this means:
       "code_kind": "script-suite",
       "paths": ["DGM_outer.py"],
       "responsibility": "驱动多代开放式演化，选择父代并调度每轮自改进。",
+      "exposes": ["python DGM_outer.py", "run_generation(...)"],
       "evidence_ids": ["ev-outer-loop"]
     },
     {
@@ -152,6 +154,7 @@ For subagents, this means:
       "code_kind": "module",
       "paths": ["self_improve_step.py"],
       "responsibility": "围绕单个失败样本执行诊断、补丁生成、回收与评测。",
+      "exposes": ["self_improve_step(...)"],
       "evidence_ids": ["ev-self-improve"]
     }
   ],

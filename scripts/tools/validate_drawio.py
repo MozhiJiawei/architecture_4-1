@@ -516,7 +516,7 @@ def validate_file(xml_path: Path) -> tuple[list[str], list[str]]:
             if box_overlap_area(first_box, second_box) > GEOMETRY_EPSILON:
                 errors.append(f"{xml_path}: labels {first.id} and {second.id} overlap")
 
-    all_segments: list[tuple[str, tuple[tuple[float, float], tuple[float, float]]]] = []
+    all_segments: list[tuple[str, str, str, tuple[tuple[float, float], tuple[float, float]]]] = []
     for cell in edge_cells:
         edge_id = cell.attrib.get("id", "")
         source = cell.attrib.get("source", "")
@@ -531,11 +531,13 @@ def validate_file(xml_path: Path) -> tuple[list[str], list[str]]:
                     continue
                 if segment_intersects_box(start, end, obstacle):
                     errors.append(f"{xml_path}: edge {edge_id} overlaps node {obstacle.id}")
-            all_segments.append((edge_id, segment))
+            all_segments.append((edge_id, source, target, segment))
 
-    for index, (edge_id, segment) in enumerate(all_segments):
-        for other_edge_id, other_segment in all_segments[index + 1 :]:
+    for index, (edge_id, source, target, segment) in enumerate(all_segments):
+        for other_edge_id, other_source, other_target, other_segment in all_segments[index + 1 :]:
             if edge_id == other_edge_id:
+                continue
+            if {source, target} & {other_source, other_target}:
                 continue
             if segments_conflict(segment, other_segment):
                 errors.append(f"{xml_path}: edges {edge_id} and {other_edge_id} intersect or overlap")

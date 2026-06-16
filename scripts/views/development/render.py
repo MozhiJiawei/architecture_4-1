@@ -73,6 +73,10 @@ def node_value(element: dict[str, object], node_style: dict[str, str]) -> str:
     title_color = node_style.get("fontColor", "#111827")
     label = escape(str(element.get("label") or "").strip() or "Unnamed")
     responsibility = html_multiline(str(element.get("responsibility") or "").strip())
+    paths = html_list(
+        [str(item).strip() for item in (element.get("paths") or []) if str(item).strip()],
+        prefix="+ ",
+    )
     exposes = html_list(
         [str(item).strip() for item in (element.get("exposes") or []) if str(item).strip()],
         prefix="+ ",
@@ -87,6 +91,10 @@ def node_value(element: dict[str, object], node_style: dict[str, str]) -> str:
         "font-size:11px;line-height:1.35;text-align:left;vertical-align:top;overflow-wrap:anywhere;word-break:break-word;'>"
         "<div style='font-weight:700;margin-bottom:4px;'>简述</div>"
         f"<div style='overflow-wrap:anywhere;word-break:break-word;'>{responsibility}</div></td></tr>"
+        f"<tr><td style='background:{section_fill};border-top:1px solid {stroke};padding:8px 10px;font-size:11px;line-height:1.35;"
+        "text-align:left;vertical-align:top;overflow-wrap:anywhere;word-break:break-word;'>"
+        "<div style='font-weight:700;margin-bottom:4px;'>涉及代码</div>"
+        f"<div style='overflow-wrap:anywhere;word-break:break-word;'>{paths}</div></td></tr>"
         f"<tr><td style='background:{section_fill};border-top:1px solid {stroke};padding:8px 10px;font-size:11px;line-height:1.35;"
         "text-align:left;vertical-align:top;overflow-wrap:anywhere;word-break:break-word;'>"
         "<div style='font-weight:700;margin-bottom:4px;'>接口</div>"

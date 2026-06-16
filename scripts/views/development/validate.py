@@ -207,6 +207,9 @@ def validate_development_view(path_or_model: Path | str | dict[str, Any]) -> Val
             )
         if not str(element.get("responsibility") or "").strip():
             report.add_error("missing-responsibility", f"Element {element_id} is missing responsibility text.", element_id)
+        paths = element.get("paths")
+        if not isinstance(paths, list) or not any(str(item).strip() for item in paths):
+            report.add_warning("missing-paths", f"Element {element_id} should list concrete code paths for the rendered 涉及代码 section.", element_id)
         exposes = element.get("exposes")
         if not isinstance(exposes, list) or not any(str(item).strip() for item in exposes):
             report.add_error("missing-exposes", f"Element {element_id} must expose at least one interface line.", element_id)
@@ -339,7 +342,7 @@ def validate_development_view(path_or_model: Path | str | dict[str, Any]) -> Val
         for other_edge_id, other_source, other_target, other_segment in all_segments[index + 1 :]:
             if edge_id == other_edge_id:
                 continue
-            if {source, target} == {other_source, other_target}:
+            if {source, target} & {other_source, other_target}:
                 continue
             if segments_conflict(segment, other_segment):
                 report.add_error(
