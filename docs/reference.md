@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | 目标仓库、README、SKILL.md、代码目录、脚本和资产 | 用例视图、逻辑视图、开发视图、运行视图、draw.io 和 PNG | 仓库能力和系统结构被画成可编辑架构图 |
 
-![fireworks-tech-graph logic view](deliverables/fireworks-tech-graph/logic/logic-view.png)
+![fireworks-tech-graph logic view](/skill-static/architecture_4-1/deliverables/fireworks-tech-graph/logic/logic-view.png)
 
 这张图展示的是 `fireworks-tech-graph` 的逻辑视图。它证明系统不是把目录树机械画出来，而是把仓库抽象成入口、编排、生成、模板、规范、校验和导出等稳定职责。
 
@@ -59,35 +59,35 @@
 
 #### 用户能力
 
-![fireworks-tech-graph use case view](deliverables/fireworks-tech-graph/use-case/use-case-view.png)
+![fireworks-tech-graph use case view](/skill-static/architecture_4-1/deliverables/fireworks-tech-graph/use-case/use-case-view.png)
 
-![fireworks-tech-graph use case catalog view](deliverables/fireworks-tech-graph/use-case/use-case-catalog-view.png)
+![fireworks-tech-graph use case catalog view](/skill-static/architecture_4-1/deliverables/fireworks-tech-graph/use-case/use-case-catalog-view.png)
 
 #### 系统职责
 
-![fireworks-tech-graph logic view](deliverables/fireworks-tech-graph/logic/logic-view.png)
+![fireworks-tech-graph logic view](/skill-static/architecture_4-1/deliverables/fireworks-tech-graph/logic/logic-view.png)
 
 #### 代码维护视角
 
-![fireworks-tech-graph development view](deliverables/fireworks-tech-graph/development/development-view.png)
+![fireworks-tech-graph development view](/skill-static/architecture_4-1/deliverables/fireworks-tech-graph/development/development-view.png)
 
 #### 运行路径
 
 用户聊天触发出图：
 
-![fireworks-tech-graph runtime dialogue skill output](deliverables/fireworks-tech-graph/runtime/dialogue-skill-output.png)
+![fireworks-tech-graph runtime dialogue skill output](/skill-static/architecture_4-1/deliverables/fireworks-tech-graph/runtime/dialogue-skill-output.png)
 
 模板化生成 SVG：
 
-![fireworks-tech-graph runtime template svg](deliverables/fireworks-tech-graph/runtime/template-svg.png)
+![fireworks-tech-graph runtime template svg](/skill-static/architecture_4-1/deliverables/fireworks-tech-graph/runtime/template-svg.png)
 
 脚本校验并导出 PNG：
 
-![fireworks-tech-graph runtime validation export](deliverables/fireworks-tech-graph/runtime/validation-export.png)
+![fireworks-tech-graph runtime validation export](/skill-static/architecture_4-1/deliverables/fireworks-tech-graph/runtime/validation-export.png)
 
 批量回归测试：
 
-![fireworks-tech-graph runtime batch regression](deliverables/fireworks-tech-graph/runtime/batch-regression.png)
+![fireworks-tech-graph runtime batch regression](/skill-static/architecture_4-1/deliverables/fireworks-tech-graph/runtime/batch-regression.png)
 
 这个案例证明系统能把一个 Skill 仓库拆成用户能力、系统职责、维护边界和运行路径，而不是只画文件夹。
 
@@ -114,31 +114,31 @@
 
 #### 用户能力
 
-![dynamo-main use case view](deliverables/dynamo-main/use-case/use-case-view.png)
+![dynamo-main use case view](/skill-static/architecture_4-1/deliverables/dynamo-main/use-case/use-case-view.png)
 
-![dynamo-main use case catalog view](deliverables/dynamo-main/use-case/use-case-catalog-view.png)
+![dynamo-main use case catalog view](/skill-static/architecture_4-1/deliverables/dynamo-main/use-case/use-case-catalog-view.png)
 
 #### 系统职责
 
-![dynamo-main logic view](deliverables/dynamo-main/logic/logic-view.png)
+![dynamo-main logic view](/skill-static/architecture_4-1/deliverables/dynamo-main/logic/logic-view.png)
 
 #### 代码维护视角
 
-![dynamo-main development view](deliverables/dynamo-main/development/development-view.png)
+![dynamo-main development view](/skill-static/architecture_4-1/deliverables/dynamo-main/development/development-view.png)
 
 #### 运行路径
 
 共享缓存启动：
 
-![dynamo-main runtime shared cache startup](deliverables/dynamo-main/runtime/shared-cache-startup.png)
+![dynamo-main runtime shared cache startup](/skill-static/architecture_4-1/deliverables/dynamo-main/runtime/shared-cache-startup.png)
 
 ModelExpress 启动：
 
-![dynamo-main runtime ModelExpress startup](deliverables/dynamo-main/runtime/modelexpress-startup.png)
+![dynamo-main runtime ModelExpress startup](/skill-static/architecture_4-1/deliverables/dynamo-main/runtime/modelexpress-startup.png)
 
 Checkpoint 热恢复：
 
-![dynamo-main runtime checkpoint recovery](deliverables/dynamo-main/runtime/checkpoint-recovery.png)
+![dynamo-main runtime checkpoint recovery](/skill-static/architecture_4-1/deliverables/dynamo-main/runtime/checkpoint-recovery.png)
 
 这个案例证明系统能处理复杂工程仓库，并把服务能力、系统职责和运行恢复路径分开表达。
 
